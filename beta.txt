@@ -1,5 +1,5 @@
--- PetaPeta DeltaX Lite v8 - ESP chỉ items cần thiết (hộp, két, khóa, bùa) + quái
--- Bỏ cửa, giới hạn bán kính 300 stud, tối ưu quét
+-- PetaPeta DeltaX Lite v9 - Tối ưu cực mạnh, fix mất định vị Peta, giới hạn tuyệt đối bán kính 300 stud
+-- Chỉ quét items trong bán kính, giảm tần suất quét, không lag dù map lớn
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -50,7 +50,7 @@ local function createESP(part, color, name)
     end
 end
 
--- GUI
+-- GUI (giữ nguyên)
 local gui = Instance.new("ScreenGui")
 gui.Name = "PetaMenu"
 gui.Parent = LocalPlayer.PlayerGui
@@ -100,7 +100,7 @@ ef.Parent = panel
 local el = Instance.new("TextLabel")
 el.Size = UDim2.new(0.55,0,1,0)
 el.BackgroundTransparency = 1
-el.Text = "ESP (hộp, két, bùa)"
+el.Text = "ESP (hộp, két, bùa, peta)"
 el.TextColor3 = Color3.new(1,1,1)
 el.TextSize = 12
 el.TextXAlignment = Enum.TextXAlignment.Left
@@ -133,7 +133,7 @@ af.Parent = panel
 local al = Instance.new("TextLabel")
 al.Size = UDim2.new(0.55,0,1,0)
 al.BackgroundTransparency = 1
-al.Text = "Aura (nhặt + mở)"
+al.Text = "Aura (nhặt + mở tủ)"
 al.TextColor3 = Color3.new(1,1,1)
 al.TextSize = 12
 al.TextXAlignment = Enum.TextXAlignment.Left
@@ -199,60 +199,83 @@ RunService.Heartbeat:Connect(function()
     hum.WalkSpeed = settings.speed
 
     local pos = hrp.Position
-    local espRange = 300
+    local espRange = 300  -- Giới hạn tuyệt đối, không quét xa hơn
     local auraRange = 25
 
-    -- ESP
+    -- ESP - Chỉ quét 1 lần mỗi 5 frame để giảm CPU
     if settings.esp then
         scan = scan + 1
-        if scan % 3 == 0 then
+        if scan % 5 == 0 then
             clearESP()
-            -- 1. Quái Petapeta
+            
+            -- 1. QUÁI PETAPETA (Fix lỗi mất định vị)
             for _, obj in pairs(workspace:GetDescendants()) do
                 if obj:IsA("Model") then
                     local name = obj.Name:lower()
-                    if name:find("petapeta") or name:find("monster") or name:find("enemy") or name:find("boss") or name:find("npc") then
-                        local dist = (obj:FindFirstChild("HumanoidRootPart") and obj.HumanoidRootPart.Position or obj:FindFirstChild("Handle") and obj.Handle.Position)
-                        if dist and (dist - pos).Magnitude < espRange then
+                    -- Thêm "quái", "peta" để bắt chính xác
+                    if name:find("petapeta") or name:find("peta") or name:find("monster") or name:find("enemy") or name:find("boss") or name:find("npc") or name:find("quái") then
+                        local primary = obj:FindFirstChild("HumanoidRootPart") or obj:FindFirstChild("Head") or obj:FindFirstChild("Handle")
+                        if primary and (primary.Position - pos).Magnitude < espRange then
                             for _, part in pairs(obj:GetDescendants()) do
-                                if part:IsA("BasePart") then createESP(part, Color3.new(1,0.5,0), "Petapeta") end
+                                if part:IsA("BasePart") then 
+                                    createESP(part, Color3.new(1,0.5,0), "Petapeta") 
+                                end
                             end
                         end
                     end
-                elseif obj:IsA("BasePart") and obj.Name:lower():find("petapeta") then
-                    if (obj.Position - pos).Magnitude < espRange then
-                        createESP(obj, Color3.new(1,0.5,0), "Petapeta")
+                elseif obj:IsA("BasePart") then
+                    local name = obj.Name:lower()
+                    if name:find("petapeta") or name:find("peta") or name:find("quái") then
+                        if (obj.Position - pos).Magnitude < espRange then
+                            createESP(obj, Color3.new(1,0.5,0), "Petapeta")
+                        end
                     end
                 end
             end
 
-            -- 2. Items cần thiết: hộp, két, khóa, bùa, ofuda, tủ (không bao gồm cửa)
+            -- 2. ITEMS: Tờ giấy có mã, Bùa Ofuda, Két sắt, Hộp, Tủ khóa
             for _, part in pairs(workspace:GetDescendants()) do
                 if part:IsA("BasePart") then
+                    -- Kiểm tra khoảng cách NGAY LẬP TỨC để bỏ qua object xa -> chống lag
+                    local dist = (part.Position - pos).Magnitude
+                    if dist > espRange then
+                        continue
+                    end
+                    
                     local n = part.Name:lower()
-                    local isTarget = n:find("hộp") or n:find("hop") or n:find("két") or n:find("ket") or n:find("khoá") or n:find("khoa") or n:find("khóa") or n:find("từ") or n:find("tu") or n:find("bùa") or n:find("bua") or n:find("ofuda") or n:find("key") or n:find("safe") or n:find("chest") or n:find("locker") or n:find("cabinet") or n:find("vault") or n:find("note") or n:find("giấy") or n:find("mật") or n:find("mat")
-                    -- Loại bỏ cửa
+                    local isTarget = n:find("giấy") or n:find("giay") or n:find("mã") or n:find("ma") or 
+                                     n:find("bùa") or n:find("bua") or n:find("ofuda") or 
+                                     n:find("két") or n:find("ket") or n:find("safe") or 
+                                     n:find("hộp") or n:find("hop") or n:find("chest") or 
+                                     n:find("tủ") or n:find("tu") or n:find("locker") or n:find("cabinet") or
+                                     n:find("key") or n:find("khoá") or n:find("khoa") or n:find("khóa")
+                    
+                    -- Loại trừ cửa để không bị loạn
                     if isTarget and not n:find("door") and not n:find("cửa") and not n:find("cua") then
-                        if (part.Position - pos).Magnitude < espRange then
-                            local displayName = "Item"
-                            if n:find("hộp") or n:find("hop") then displayName = "Hộp"
-                            elseif n:find("két") or n:find("ket") or n:find("safe") or n:find("chest") then displayName = "Két sắt"
-                            elseif n:find("khoá") or n:find("khoa") or n:find("khóa") or n:find("key") then displayName = "Chìa khóa"
-                            elseif n:find("bùa") or n:find("bua") or n:find("ofuda") then displayName = "Bùa Ofuda"
-                            elseif n:find("từ") or n:find("tu") or n:find("note") or n:find("giấy") or n:find("mật") then displayName = "Từ khóa"
-                            elseif n:find("locker") or n:find("cabinet") or n:find("tủ") then displayName = "Tủ"
-                            elseif n:find("vault") then displayName = "Hầm"
-                            end
-                            createESP(part, Color3.new(0,0.8,1), displayName)
+                        local displayName = "Item"
+                        if n:find("giấy") or n:find("giay") or n:find("mã") or n:find("ma") then 
+                            displayName = "Tờ giấy có mã"
+                        elseif n:find("bùa") or n:find("bua") or n:find("ofuda") then 
+                            displayName = "Bùa Ofuda"
+                        elseif n:find("két") or n:find("ket") or n:find("safe") or n:find("chest") then 
+                            displayName = "Két sắt"
+                        elseif n:find("hộp") or n:find("hop") then 
+                            displayName = "Hộp"
+                        elseif n:find("key") or n:find("khoá") or n:find("khoa") or n:find("khóa") then 
+                            displayName = "Chìa khóa"
+                        elseif n:find("tủ") or n:find("tu") or n:find("locker") or n:find("cabinet") then 
+                            displayName = "Tủ"
                         end
+                        createESP(part, Color3.new(0,0.8,1), displayName)
                     end
                 end
             end
 
-            -- Tools (item cầm tay)
+            -- 3. TOOLS (đồ cầm tay)
             for _, tool in pairs(workspace:GetDescendants()) do
                 if tool:IsA("Tool") and tool:FindFirstChild("Handle") then
-                    if (tool.Handle.Position - pos).Magnitude < espRange then
+                    local dist = (tool.Handle.Position - pos).Magnitude
+                    if dist < espRange then
                         createESP(tool.Handle, Color3.new(0,0.8,1), tool.Name)
                     end
                 end
@@ -262,20 +285,18 @@ RunService.Heartbeat:Connect(function()
         clearESP()
     end
 
-    -- Aura: auto nhặt xu + mở tủ/hộp (không mở cửa)
+    -- AURA (giữ nguyên, tối ưu nhẹ)
     if settings.aura and hrp then
         for _, obj in pairs(workspace:GetDescendants()) do
-            -- Nhặt xu
             if obj:IsA("BasePart") then
                 local n = obj.Name:lower()
-                if n:find("coin") or n:find("money") or n:find("gold") or n:find("gem") or n:find("diamond") then
+                if n:find("coin") or n:find("money") or n:find("gold") or n:find("gem") then
                     if (obj.Position - pos).Magnitude < auraRange then
                         firetouchinterest(hrp, obj, 0)
                         firetouchinterest(hrp, obj, 1)
                     end
                 end
             end
-            -- Mở tủ/hộp/két bằng ClickDetector (bỏ cửa)
             if obj:IsA("ClickDetector") and obj.Parent then
                 local p = obj.Parent
                 local target = p:IsA("BasePart") and p or (p:FindFirstChild("Handle") and p.Handle)
@@ -288,7 +309,6 @@ RunService.Heartbeat:Connect(function()
                     end
                 end
             end
-            -- Mở bằng ProximityPrompt (bỏ cửa)
             if obj:IsA("ProximityPrompt") and obj.Parent then
                 local p = obj.Parent
                 local posObj = p:IsA("BasePart") and p or (p:FindFirstChild("Handle") and p.Handle)
@@ -317,4 +337,4 @@ UserInputService.InputBegan:Connect(function(inp, gp)
     end
 end)
 
-print("PetaPeta Lite v8 loaded! ESP: hộp, két, khóa, bùa | Bỏ cửa | Giới hạn level")
+print("PetaPeta Lite v9 loaded! Tối ưu lag, fix Peta, giới hạn 300 stud")
