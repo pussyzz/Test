@@ -1,6 +1,6 @@
--- PetaPeta DeltaX Lite v6 - ESP giới hạn level, auto aura fix
--- Chỉ ESP: chìa khóa, két sắt, quái Petapeta (trong bán kính 200 stud)
--- Auto: nhặt xu + mở cửa/tủ trong bán kính 18
+-- PetaPeta DeltaX Lite v7 - ESP đa items + quái, auto aura nâng cấp
+-- ESP: chìa khóa, két sắt, note, mật mã, tủ, cửa, quái Petapeta (bán kính 250)
+-- Auto: nhặt xu + mở cửa/tủ (bán kính 25)
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -26,7 +26,7 @@ local function createESP(part, color, name)
     if not part or not part.Parent then return end
     local h = Instance.new("Highlight")
     h.FillColor = color
-    h.FillTransparency = 0.35
+    h.FillTransparency = 0.3
     h.OutlineColor = color
     h.OutlineTransparency = 0.1
     h.Adornee = part
@@ -34,7 +34,7 @@ local function createESP(part, color, name)
     table.insert(espObjects, h)
     if name then
         local bill = Instance.new("BillboardGui")
-        bill.Size = UDim2.new(0, 130, 0, 22)
+        bill.Size = UDim2.new(0, 150, 0, 24)
         bill.AlwaysOnTop = true
         bill.Adornee = part
         bill.Parent = part
@@ -43,7 +43,7 @@ local function createESP(part, color, name)
         lbl.BackgroundTransparency = 1
         lbl.Text = name
         lbl.TextColor3 = Color3.new(1,1,1)
-        lbl.TextSize = 12
+        lbl.TextSize = 13
         lbl.Font = Enum.Font.SourceSansBold
         lbl.TextStrokeTransparency = 0.2
         lbl.Parent = bill
@@ -101,7 +101,7 @@ ef.Parent = panel
 local el = Instance.new("TextLabel")
 el.Size = UDim2.new(0.55,0,1,0)
 el.BackgroundTransparency = 1
-el.Text = "ESP (key, két, quái)"
+el.Text = "ESP (items + quái)"
 el.TextColor3 = Color3.new(1,1,1)
 el.TextSize = 12
 el.TextXAlignment = Enum.TextXAlignment.Left
@@ -200,37 +200,58 @@ RunService.Heartbeat:Connect(function()
     hum.WalkSpeed = settings.speed
 
     local pos = hrp.Position
-    local range = 200 -- bán kính ESP giới hạn level
+    local espRange = 250
+    local auraRange = 25
 
-    -- ESP: chỉ key, két sắt, quái Petapeta trong bán kính
+    -- ESP
     if settings.esp then
         scan = scan + 1
         if scan % 3 == 0 then
             clearESP()
-            -- Quái Petapeta (tên chính xác hoặc chứa "petapeta")
+            -- 1. Quái Petapeta (tìm model hoặc part tên chứa "petapeta", "monster", "enemy", "boss", "npc")
             for _, obj in pairs(workspace:GetDescendants()) do
-                if obj:IsA("Model") and (obj.Name:lower():find("petapeta") or obj.Name:lower():find("monster")) then
+                local name = obj.Name:lower()
+                if obj:IsA("Model") and (name:find("petapeta") or name:find("monster") or name:find("enemy") or name:find("boss") or name:find("npc")) then
                     local dist = (obj:FindFirstChild("HumanoidRootPart") and obj.HumanoidRootPart.Position or obj:FindFirstChild("Handle") and obj.Handle.Position)
-                    if dist and (dist - pos).Magnitude < range then
+                    if dist and (dist - pos).Magnitude < espRange then
                         for _, part in pairs(obj:GetDescendants()) do
                             if part:IsA("BasePart") then createESP(part, Color3.new(1,0.5,0), "Petapeta") end
                         end
                     end
-                end
-            end
-            -- Chìa khóa (key)
-            for _, part in pairs(workspace:GetDescendants()) do
-                if part:IsA("BasePart") and part.Name:lower():find("key") then
-                    if (part.Position - pos).Magnitude < range then
-                        createESP(part, Color3.new(0,0.8,1), "Chìa khóa")
+                elseif obj:IsA("BasePart") and (name:find("petapeta") or name:find("monster") or name:find("enemy") or name:find("boss") or name:find("npc")) then
+                    if (obj.Position - pos).Magnitude < espRange then
+                        createESP(obj, Color3.new(1,0.5,0), "Petapeta")
                     end
                 end
             end
-            -- Két sắt (chest, safe, locker, cabinet, vault, két)
+
+            -- 2. Items: chìa khóa, két sắt, note, mật mã, tủ, cửa, locker, cabinet, vault, safe, chest
             for _, part in pairs(workspace:GetDescendants()) do
-                if part:IsA("BasePart") and (part.Name:lower():find("két") or part.Name:lower():find("chest") or part.Name:lower():find("safe") or part.Name:lower():find("locker") or part.Name:lower():find("cabinet") or part.Name:lower():find("vault")) then
-                    if (part.Position - pos).Magnitude < range then
-                        createESP(part, Color3.new(0,1,0), "Két sắt")
+                if part:IsA("BasePart") then
+                    local n = part.Name:lower()
+                    local isItem = n:find("key") or n:find("chìa") or n:find("khoá") or n:find("note") or n:find("giấy") or n:find("mật") or n:find("mã") or n:find("két") or n:find("safe") or n:find("chest") or n:find("locker") or n:find("cabinet") or n:find("vault") or n:find("door") or n:find("cửa") or n:find("tủ")
+                    if isItem then
+                        if (part.Position - pos).Magnitude < espRange then
+                            local displayName = "Item"
+                            if n:find("key") or n:find("chìa") or n:find("khoá") then displayName = "Chìa khóa"
+                            elseif n:find("két") or n:find("safe") or n:find("chest") then displayName = "Két sắt"
+                            elseif n:find("note") or n:find("giấy") or n:find("mật") then displayName = "Note"
+                            elseif n:find("door") or n:find("cửa") then displayName = "Cửa"
+                            elseif n:find("tủ") or n:find("locker") or n:find("cabinet") then displayName = "Tủ"
+                            elseif n:find("vault") then displayName = "Hầm"
+                            end
+                            createESP(part, Color3.new(0,0.8,1), displayName)
+                        end
+                    end
+                end
+            end
+
+            -- 3. Tools (item cầm tay) cũng quét
+            for _, tool in pairs(workspace:GetDescendants()) do
+                if tool:IsA("Tool") and tool:FindFirstChild("Handle") then
+                    local dist = (tool.Handle.Position - pos).Magnitude
+                    if dist < espRange then
+                        createESP(tool.Handle, Color3.new(0,0.8,1), tool.Name)
                     end
                 end
             end
@@ -239,14 +260,14 @@ RunService.Heartbeat:Connect(function()
         clearESP()
     end
 
-    -- Aura: auto nhặt xu + mở cửa/tủ (bán kính 18)
+    -- Aura: auto nhặt xu + mở cửa/tủ
     if settings.aura and hrp then
         for _, obj in pairs(workspace:GetDescendants()) do
-            -- Nhặt xu (coin, money, gold, gem)
+            -- Nhặt xu (coin, money, gold, gem, diamond)
             if obj:IsA("BasePart") then
                 local n = obj.Name:lower()
                 if n:find("coin") or n:find("money") or n:find("gold") or n:find("gem") or n:find("diamond") then
-                    if (obj.Position - pos).Magnitude < 18 then
+                    if (obj.Position - pos).Magnitude < auraRange then
                         firetouchinterest(hrp, obj, 0)
                         firetouchinterest(hrp, obj, 1)
                     end
@@ -256,7 +277,7 @@ RunService.Heartbeat:Connect(function()
             if obj:IsA("ClickDetector") and obj.Parent then
                 local p = obj.Parent
                 local target = p:IsA("BasePart") and p or (p:FindFirstChild("Handle") and p.Handle)
-                if target and (target.Position - pos).Magnitude < 18 then
+                if target and (target.Position - pos).Magnitude < auraRange then
                     obj.MouseClick:Fire(LocalPlayer)
                 end
             end
@@ -264,7 +285,7 @@ RunService.Heartbeat:Connect(function()
             if obj:IsA("ProximityPrompt") and obj.Parent then
                 local p = obj.Parent
                 local posObj = p:IsA("BasePart") and p or (p:FindFirstChild("Handle") and p.Handle)
-                if posObj and (posObj.Position - pos).Magnitude < 18 then
+                if posObj and (posObj.Position - pos).Magnitude < auraRange then
                     obj.HoldEnd:Fire(LocalPlayer)
                 end
             end
@@ -284,4 +305,4 @@ UserInputService.InputBegan:Connect(function(inp, gp)
     end
 end)
 
-print("PetaPeta Lite v6 loaded! F1 toggle | ESP limited range | Aura fixed")
+print("PetaPeta Lite v7 loaded! ESP đa items + quái, Aura nâng cấp")
