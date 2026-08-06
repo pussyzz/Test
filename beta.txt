@@ -1,5 +1,6 @@
--- PetaPeta DeltaX Ultimate v3 (Fix lag + auto)
--- ESP xuyên tường bằng Highlight, tên hiển thị, auto aura mượt
+-- PetaPeta DeltaX Menu Lite v4
+-- 3 chức năng: ESP (items + quái), Aura (nhặt xu + mở cửa/tủ), Speed
+-- Menu thu nhỏ / mở rộng như DeltaX (F1 toggle)
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -7,20 +8,14 @@ local UserInputService = game:GetService("UserInputService")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
+-- Cài đặt
 local settings = {
-    espPlayers = false,
-    espMonsters = false,
-    espItems = false,
-    espChests = false,
-    espCoins = false,
-    espNames = false,
-    autoCollect = false,
-    autoOpen = false,
-    autoLoot = false,
-    speed = 40,
-    range = 20
+    espEnabled = false,
+    auraEnabled = false,
+    speed = 40
 }
 
+-- ESP storage
 local espObjects = {}
 local function clearESP()
     for _, obj in pairs(espObjects) do
@@ -33,16 +28,16 @@ local function createESP(part, color, name)
     if not part or not part.Parent then return end
     local highlight = Instance.new("Highlight")
     highlight.FillColor = color
-    highlight.FillTransparency = 0.4
+    highlight.FillTransparency = 0.35
     highlight.OutlineColor = color
     highlight.OutlineTransparency = 0.2
     highlight.Adornee = part
     highlight.Parent = part
     table.insert(espObjects, highlight)
 
-    if settings.espNames and name then
+    if name then
         local bill = Instance.new("BillboardGui")
-        bill.Size = UDim2.new(0, 120, 0, 20)
+        bill.Size = UDim2.new(0, 140, 0, 22)
         bill.AlwaysOnTop = true
         bill.Adornee = part
         bill.Parent = part
@@ -53,21 +48,21 @@ local function createESP(part, color, name)
         label.TextColor3 = Color3.new(1,1,1)
         label.TextSize = 12
         label.Font = Enum.Font.SourceSansBold
-        label.TextStrokeTransparency = 0.3
+        label.TextStrokeTransparency = 0.2
         label.Parent = bill
         table.insert(espObjects, bill)
     end
 end
 
--- GUI
+-- GUI - thu nhỏ/mở rộng
 local gui = Instance.new("ScreenGui")
 gui.Name = "PetaMenu"
 gui.Parent = LocalPlayer.PlayerGui
 gui.ResetOnSpawn = false
 
 local main = Instance.new("Frame")
-main.Size = UDim2.new(0, 220, 0, 370)
-main.Position = UDim2.new(0.5, -110, 0.5, -185)
+main.Size = UDim2.new(0, 200, 0, 30)  -- thu nhỏ mặc định
+main.Position = UDim2.new(0.5, -100, 0.5, -15)
 main.BackgroundColor3 = Color3.new(0,0,0)
 main.BackgroundTransparency = 0.1
 main.BorderSizePixel = 2
@@ -75,116 +70,138 @@ main.BorderColor3 = Color3.new(1,0,0)
 main.Active = true
 main.Draggable = true
 main.Parent = gui
+main.ClipsDescendants = true
 
-local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1,0,0,28)
-title.BackgroundColor3 = Color3.new(0.2,0,0)
-title.Text = "PetaPeta X"
-title.TextColor3 = Color3.new(1,0,0)
-title.TextSize = 16
-title.Font = Enum.Font.SourceSansBold
-title.Parent = main
+-- Nút mở rộng / thu nhỏ (header)
+local header = Instance.new("TextButton")
+header.Size = UDim2.new(1, 0, 0, 30)
+header.BackgroundColor3 = Color3.new(0.2,0,0)
+header.Text = "▼ PetaPeta X"
+header.TextColor3 = Color3.new(1,0,0)
+header.TextSize = 14
+header.Font = Enum.Font.SourceSansBold
+header.Parent = main
 
-local closeBtn = Instance.new("TextButton")
-closeBtn.Size = UDim2.new(0,50,0,22)
-closeBtn.Position = UDim2.new(1,-55,0,3)
-closeBtn.BackgroundColor3 = Color3.new(0.15,0,0)
-closeBtn.BorderColor3 = Color3.new(1,0,0)
-closeBtn.BorderSizePixel = 1
-closeBtn.Text = "✕"
-closeBtn.TextColor3 = Color3.new(1,0,0)
-closeBtn.TextSize = 14
-closeBtn.Font = Enum.Font.SourceSansBold
-closeBtn.Parent = main
-closeBtn.MouseButton1Click:Connect(function() main.Visible = false end)
-
-local function makeToggle(text, y, key)
-    local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(1,-8,0,24)
-    frame.Position = UDim2.new(0,4,0,y)
-    frame.BackgroundTransparency = 1
-    frame.Parent = main
-    local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(0.6,0,1,0)
-    label.BackgroundTransparency = 1
-    label.Text = text
-    label.TextColor3 = Color3.new(1,1,1)
-    label.TextSize = 13
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    label.Font = Enum.Font.SourceSans
-    label.Parent = frame
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0.32,0,1,-2)
-    btn.Position = UDim2.new(0.68,0,0,1)
-    btn.BackgroundColor3 = Color3.new(0.1,0,0)
-    btn.BorderColor3 = Color3.new(1,0,0)
-    btn.BorderSizePixel = 1
-    btn.Text = "OFF"
-    btn.TextColor3 = Color3.new(1,0,0)
-    btn.TextSize = 11
-    btn.Font = Enum.Font.SourceSansBold
-    btn.Parent = frame
-    btn.MouseButton1Click:Connect(function()
-        settings[key] = not settings[key]
-        btn.Text = settings[key] and "ON" or "OFF"
-        btn.TextColor3 = settings[key] and Color3.new(0,1,0) or Color3.new(1,0,0)
-        if not settings[key] and string.find(key,"esp") then clearESP() end
-    end)
+local expanded = false
+local function toggleExpand()
+    expanded = not expanded
+    main.Size = expanded and UDim2.new(0, 200, 0, 160) or UDim2.new(0, 200, 0, 30)
+    header.Text = expanded and "▲ PetaPeta X" or "▼ PetaPeta X"
 end
+header.MouseButton1Click:Connect(toggleExpand)
 
-makeToggle("ESP Players", 32, "espPlayers")
-makeToggle("ESP Monsters", 58, "espMonsters")
-makeToggle("ESP Items", 84, "espItems")
-makeToggle("ESP Chests/Doors", 110, "espChests")
-makeToggle("ESP Coins", 136, "espCoins")
-makeToggle("ESP Names", 162, "espNames")
-makeToggle("Auto Collect (aura)", 188, "autoCollect")
-makeToggle("Auto Open (aura)", 214, "autoOpen")
-makeToggle("Auto Loot (aura)", 240, "autoLoot")
+-- Panel chứa các chức năng (ẩn khi thu nhỏ)
+local panel = Instance.new("Frame")
+panel.Size = UDim2.new(1, 0, 1, -30)
+panel.Position = UDim2.new(0, 0, 0, 30)
+panel.BackgroundTransparency = 1
+panel.Parent = main
 
-local sf = Instance.new("Frame")
-sf.Size = UDim2.new(1,-8,0,28)
-sf.Position = UDim2.new(0,4,0,272)
-sf.BackgroundTransparency = 1
-sf.Parent = main
-local sl = Instance.new("TextLabel")
-sl.Size = UDim2.new(0.45,0,1,0)
-sl.BackgroundTransparency = 1
-sl.Text = "Speed: 40"
-sl.TextColor3 = Color3.new(1,1,1)
-sl.TextSize = 13
-sl.TextXAlignment = Enum.TextXAlignment.Left
-sl.Font = Enum.Font.SourceSans
-sl.Parent = sf
-local sb = Instance.new("TextBox")
-sb.Size = UDim2.new(0.45,0,1,-4)
-sb.Position = UDim2.new(0.55,0,0,2)
-sb.BackgroundColor3 = Color3.new(0.1,0,0)
-sb.BorderColor3 = Color3.new(1,0,0)
-sb.BorderSizePixel = 1
-sb.Text = "40"
-sb.TextColor3 = Color3.new(1,0,0)
-sb.TextSize = 13
-sb.Font = Enum.Font.SourceSans
-sb.Parent = sf
-sb.FocusLost:Connect(function()
-    local v = tonumber(sb.Text)
-    if v and v > 0 then settings.speed = v sl.Text = "Speed: "..v else sb.Text = tostring(settings.speed) end
+-- Chức năng 1: ESP
+local espFrame = Instance.new("Frame")
+espFrame.Size = UDim2.new(1, -10, 0, 28)
+espFrame.Position = UDim2.new(0, 5, 0, 5)
+espFrame.BackgroundTransparency = 1
+espFrame.Parent = panel
+
+local espLabel = Instance.new("TextLabel")
+espLabel.Size = UDim2.new(0.55, 0, 1, 0)
+espLabel.BackgroundTransparency = 1
+espLabel.Text = "ESP (items + quái)"
+espLabel.TextColor3 = Color3.new(1,1,1)
+espLabel.TextSize = 12
+espLabel.TextXAlignment = Enum.TextXAlignment.Left
+espLabel.Font = Enum.Font.SourceSans
+espLabel.Parent = espFrame
+
+local espBtn = Instance.new("TextButton")
+espBtn.Size = UDim2.new(0.35, 0, 1, -2)
+espBtn.Position = UDim2.new(0.65, 0, 0, 1)
+espBtn.BackgroundColor3 = Color3.new(0.1,0,0)
+espBtn.BorderColor3 = Color3.new(1,0,0)
+espBtn.BorderSizePixel = 1
+espBtn.Text = "OFF"
+espBtn.TextColor3 = Color3.new(1,0,0)
+espBtn.TextSize = 11
+espBtn.Font = Enum.Font.SourceSansBold
+espBtn.Parent = espFrame
+espBtn.MouseButton1Click:Connect(function()
+    settings.espEnabled = not settings.espEnabled
+    espBtn.Text = settings.espEnabled and "ON" or "OFF"
+    espBtn.TextColor3 = settings.espEnabled and Color3.new(0,1,0) or Color3.new(1,0,0)
+    if not settings.espEnabled then clearESP() end
 end)
 
-local ver = Instance.new("TextLabel")
-ver.Size = UDim2.new(1,0,0,20)
-ver.Position = UDim2.new(0,0,1,-22)
-ver.BackgroundTransparency = 1
-ver.Text = "F1 toggle | v3"
-ver.TextColor3 = Color3.new(0.5,0.5,0.5)
-ver.TextSize = 11
-ver.Font = Enum.Font.SourceSans
-ver.Parent = main
+-- Chức năng 2: Aura
+local auraFrame = Instance.new("Frame")
+auraFrame.Size = UDim2.new(1, -10, 0, 28)
+auraFrame.Position = UDim2.new(0, 5, 0, 37)
+auraFrame.BackgroundTransparency = 1
+auraFrame.Parent = panel
+
+local auraLabel = Instance.new("TextLabel")
+auraLabel.Size = UDim2.new(0.55, 0, 1, 0)
+auraLabel.BackgroundTransparency = 1
+auraLabel.Text = "Aura (nhặt xu + mở)"
+auraLabel.TextColor3 = Color3.new(1,1,1)
+auraLabel.TextSize = 12
+auraLabel.TextXAlignment = Enum.TextXAlignment.Left
+auraLabel.Font = Enum.Font.SourceSans
+auraLabel.Parent = auraFrame
+
+local auraBtn = Instance.new("TextButton")
+auraBtn.Size = UDim2.new(0.35, 0, 1, -2)
+auraBtn.Position = UDim2.new(0.65, 0, 0, 1)
+auraBtn.BackgroundColor3 = Color3.new(0.1,0,0)
+auraBtn.BorderColor3 = Color3.new(1,0,0)
+auraBtn.BorderSizePixel = 1
+auraBtn.Text = "OFF"
+auraBtn.TextColor3 = Color3.new(1,0,0)
+auraBtn.TextSize = 11
+auraBtn.Font = Enum.Font.SourceSansBold
+auraBtn.Parent = auraFrame
+auraBtn.MouseButton1Click:Connect(function()
+    settings.auraEnabled = not settings.auraEnabled
+    auraBtn.Text = settings.auraEnabled and "ON" or "OFF"
+    auraBtn.TextColor3 = settings.auraEnabled and Color3.new(0,1,0) or Color3.new(1,0,0)
+end)
+
+-- Chức năng 3: Speed
+local speedFrame = Instance.new("Frame")
+speedFrame.Size = UDim2.new(1, -10, 0, 28)
+speedFrame.Position = UDim2.new(0, 5, 0, 69)
+speedFrame.BackgroundTransparency = 1
+speedFrame.Parent = panel
+
+local speedLabel = Instance.new("TextLabel")
+speedLabel.Size = UDim2.new(0.4, 0, 1, 0)
+speedLabel.BackgroundTransparency = 1
+speedLabel.Text = "Speed: 40"
+speedLabel.TextColor3 = Color3.new(1,1,1)
+speedLabel.TextSize = 12
+speedLabel.TextXAlignment = Enum.TextXAlignment.Left
+speedLabel.Font = Enum.Font.SourceSans
+speedLabel.Parent = speedFrame
+
+local speedBox = Instance.new("TextBox")
+speedBox.Size = UDim2.new(0.4, 0, 1, -4)
+speedBox.Position = UDim2.new(0.55, 0, 0, 2)
+speedBox.BackgroundColor3 = Color3.new(0.1,0,0)
+speedBox.BorderColor3 = Color3.new(1,0,0)
+speedBox.BorderSizePixel = 1
+speedBox.Text = "40"
+speedBox.TextColor3 = Color3.new(1,0,0)
+speedBox.TextSize = 12
+speedBox.Font = Enum.Font.SourceSans
+speedBox.Parent = speedFrame
+speedBox.FocusLost:Connect(function()
+    local v = tonumber(speedBox.Text)
+    if v and v > 0 then settings.speed = v speedLabel.Text = "Speed: "..v else speedBox.Text = tostring(settings.speed) end
+end)
 
 -- Main Loop
 local hrp, hum
-local scanCount = 0
+local scan = 0
 RunService.Heartbeat:Connect(function()
     local char = LocalPlayer.Character
     if not char then return end
@@ -193,19 +210,12 @@ RunService.Heartbeat:Connect(function()
     if not hrp or not hum then return end
     hum.WalkSpeed = settings.speed
 
-    scanCount = scanCount + 1
-    if scanCount % 3 == 0 and (settings.espPlayers or settings.espMonsters or settings.espItems or settings.espChests or settings.espCoins) then
-        clearESP()
-        if settings.espPlayers then
-            for _, plr in pairs(Players:GetPlayers()) do
-                if plr ~= LocalPlayer and plr.Character then
-                    for _, part in pairs(plr.Character:GetDescendants()) do
-                        if part:IsA("BasePart") then createESP(part, Color3.new(1,0,0)) end
-                    end
-                end
-            end
-        end
-        if settings.espMonsters then
+    -- ESP (chỉ items đặc biệt + quái)
+    if settings.espEnabled then
+        scan = scan + 1
+        if scan % 3 == 0 then
+            clearESP()
+            -- Quái (cam)
             for _, obj in pairs(workspace:GetDescendants()) do
                 if obj:IsA("Model") and (obj.Name:lower():find("monster") or obj.Name:lower():find("enemy") or obj.Name:lower():find("boss") or obj.Name:lower():find("npc")) then
                     for _, part in pairs(obj:GetDescendants()) do
@@ -213,77 +223,69 @@ RunService.Heartbeat:Connect(function()
                     end
                 end
             end
-        end
-        if settings.espItems then
-            for _, item in pairs(workspace:GetDescendants()) do
-                if item:IsA("Tool") and item:FindFirstChild("Handle") then
-                    createESP(item.Handle, Color3.new(0,0.8,1), item.Name)
-                end
-            end
-        end
-        if settings.espChests then
+            -- Items: key, rương, note, két sắt, tủ, locker, cabinet, vault (xanh dương)
             for _, part in pairs(workspace:GetDescendants()) do
                 if part:IsA("BasePart") then
                     local n = part.Name:lower()
-                    if n:find("chest") or n:find("door") or n:find("crate") or n:find("vault") or n:find("cabinet") or n:find("locker") then
-                        createESP(part, Color3.new(0,1,0), part.Name)
+                    if n:find("key") or n:find("ruong") or n:find("chest") or n:find("note") or n:find("giay") or n:find("két") or n:find("sắt") or n:find("locker") or n:find("cabinet") or n:find("vault") or n:find("door") then
+                        createESP(part, Color3.new(0,0.8,1), part.Name)
                     end
                 end
             end
-        end
-        if settings.espCoins then
-            for _, part in pairs(workspace:GetDescendants()) do
-                if part:IsA("BasePart") then
-                    local n = part.Name:lower()
-                    if n:find("coin") or n:find("money") or n:find("gold") or n:find("gem") or n:find("diamond") then
-                        createESP(part, Color3.new(1,1,0), part.Name)
-                    end
+            -- Tools (item cầm tay)
+            for _, tool in pairs(workspace:GetDescendants()) do
+                if tool:IsA("Tool") and tool:FindFirstChild("Handle") then
+                    createESP(tool.Handle, Color3.new(0,0.8,1), tool.Name)
                 end
             end
         end
+    else
+        clearESP()
     end
 
-    -- Auto Aura (spawn ít lần)
-    if settings.autoCollect or settings.autoOpen or settings.autoLoot then
+    -- Aura: nhặt xu + mở cửa/tủ
+    if settings.auraEnabled and hrp then
         local pos = hrp.Position
-        local range = settings.range
         for _, obj in pairs(workspace:GetDescendants()) do
-            if settings.autoCollect and obj:IsA("Tool") and obj:FindFirstChild("Handle") then
-                if (obj.Handle.Position - pos).Magnitude < range then
-                    firetouchinterest(hrp, obj.Handle, 0)
-                    firetouchinterest(hrp, obj.Handle, 1)
-                end
-            end
-            if settings.autoOpen and obj:IsA("ClickDetector") and obj.Parent then
-                local p = obj.Parent
-                local target = p:IsA("BasePart") and p or (p:FindFirstChild("Handle") and p.Handle)
-                if target and (target.Position - pos).Magnitude < range then
-                    obj.MouseClick:Fire(LocalPlayer)
-                end
-            end
-            if settings.autoOpen and obj:IsA("ProximityPrompt") and obj.Parent then
-                if (obj.Parent.Position - pos).Magnitude < range then
-                    obj.HoldEnd:Fire(LocalPlayer)
-                end
-            end
-            if settings.autoLoot and obj:IsA("BasePart") then
+            -- Nhặt xu (coin, money, gold, gem)
+            if obj:IsA("BasePart") then
                 local n = obj.Name:lower()
-                if n:find("coin") or n:find("money") or n:find("gold") or n:find("gem") then
-                    if (obj.Position - pos).Magnitude < range then
+                if n:find("coin") or n:find("money") or n:find("gold") or n:find("gem") or n:find("diamond") then
+                    if (obj.Position - pos).Magnitude < 18 then
                         firetouchinterest(hrp, obj, 0)
                         firetouchinterest(hrp, obj, 1)
                     end
                 end
             end
+            -- Mở cửa, tủ, két (ClickDetector)
+            if obj:IsA("ClickDetector") and obj.Parent then
+                local p = obj.Parent
+                local target = p:IsA("BasePart") and p or (p:FindFirstChild("Handle") and p.Handle)
+                if target and (target.Position - pos).Magnitude < 15 then
+                    obj.MouseClick:Fire(LocalPlayer)
+                end
+            end
+            -- Mở bằng ProximityPrompt
+            if obj:IsA("ProximityPrompt") and obj.Parent then
+                if (obj.Parent.Position - pos).Magnitude < 15 then
+                    obj.HoldEnd:Fire(LocalPlayer)
+                end
+            end
         end
     end
 end)
 
-UserInputService.InputBegan:Connect(function(inp,gp)
+-- F1 mở/tắt menu (thu nhỏ/mở rộng)
+UserInputService.InputBegan:Connect(function(inp, gp)
     if gp then return end
     if inp.KeyCode == Enum.KeyCode.F1 then
-        main.Visible = not main.Visible
+        if main.Visible then
+            toggleExpand()
+        else
+            main.Visible = true
+        end
     end
 end)
 
-print("PetaPeta v3 loaded! F1 toggle | ESP xuyên tường + tên | Aura auto nhặt/mở")
+print("PetaPeta Lite v4 loaded! F1 toggle menu (thu nhỏ/mở rộng)")
+print("ESP: items (key, rương, note, két sắt) + quái | Aura: nhặt xu + mở cửa/tủ | Speed")
