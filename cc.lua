@@ -68,6 +68,15 @@ task.spawn(function()
                 string.find(string.lower(item.Name), "peta")
                 or string.lower(item.Name) == "enemymodel"
                 or string.lower(item.Name) == "enemymodels"
+                or string.lower(item.Name) == "enemymodel_stage6"
+                or string.lower(item.Name) == "enemymodel_stage7"
+                or string.lower(item.Name) == "enemymodel_stage8"
+                or string.lower(item.Name) == "enemymodel_stage9"
+                or string.lower(item.Name) == "enemymodel_stage10"
+                or string.lower(item.Name) == "stage"
+                or string.lower(item.Name) == "enemy"      
+              
+                
             ) then
                 addChamsRGB(item)
                 local highlight = item:FindFirstChild("PetaPetaChams")
@@ -167,9 +176,16 @@ local function updateItemESP()
             {MeshId = "rbxassetid://87090876258729", Name = "Doll Head", Color = Color3.fromRGB(200, 200, 200)},
             {MeshId = "rbxassetid://81684921461563", Name = "Rope", Color = Color3.fromRGB(139, 69, 19)},
             {MeshId = "rbxassetid://95226199656060", Name = "Dish", Color = Color3.fromRGB(192, 192, 192)},
-            {MeshId = "rbxassetid://105719601831733", Name = "Lighter", Color = Color3.fromRGB(255, 165, 0)},
-            {MeshId = "rbxassetid://126055581647891", Name = "Tv", Color = Color3.fromRGB(200, 200, 200)},
-            {MeshId = "rbxassetid://128722703886289", Name = "Tv", Color = Color3.fromRGB(200, 200, 200)},
+            {MeshId = "rbxassetid://105719601831733", Name = "Light", Color = Color3.fromRGB(255, 165, 0)},
+            {MeshId = "rbxassetid://126055581647891", Name = "TV", Color = Color3.fromRGB(200, 200, 200)},
+            {MeshId = "rbxassetid://128722703886289", Name = "TV", Color = Color3.fromRGB(200, 200, 200)},
+            {MeshId = "rbxassetid://70516035370579", Name = "Petapeta StageNew", Color = Color3.fromRGB(255, 50, 50)},
+            {MeshId = "rbxassetid://78479442306609", Name = "👶 Kid / Box", Color = Color3.fromRGB(255, 215, 0)},
+            {MeshId = "rbxassetid://95425765471937", Name = "Red Candle", Color = Color3.fromRGB(255, 70, 70)},
+            {MeshId = "rbxassetid://113824635091846", Name = "Candle Stand", Color = Color3.fromRGB(255, 165, 0)},
+            {MeshId = "rbxassetid://87563522345335", Name = "Bowl", Color = Color3.fromRGB(220, 220, 255)},
+            {MeshId = "rbxassetid://95226199656060", Name = "Dish", Color = Color3.fromRGB(192, 192, 192)},
+        }
         }
 
         for _, obj in ipairs(workspace:GetDescendants()) do
