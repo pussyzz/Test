@@ -15,7 +15,7 @@
 
 local GKey = "FREE_1234567890ABCDEFGHIJKLMN"
 local PERM_KEY = "PREMIUM_yu6d7gl5itxjilc"
-local ScriptURL = "https://pastebin.com/raw/8ggACDXC"
+local ScriptURL = "https://pastebin.com/raw/cbqRRDgz"
 local KeyLink = "https://link-target.net/1314896/MM1Xm4pr7K2C"
 local PermKeyLink = "https://shoppy.gg/product/rw4FHGS"
 local TitleText = "Key System"
