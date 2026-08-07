@@ -4,7 +4,7 @@ local LocalPlayer = Players.LocalPlayer
 local RunService = game:GetService("RunService")
 
 -- ==========================================
--- KHỞI TẠO GIAO DIỆN WINDUI (TỪ SCRIPT.LUA)
+-- KHỞI TẠO GIAO DIỆN WINDUI
 -- ==========================================
 local Window = WindUI:CreateWindow({
     Folder = "RenrenHub",
@@ -32,10 +32,10 @@ local Tabs = {
 }
 
 -- ==========================================
--- LOGIC CHỨC NĂNG NGUYÊN BẢN CỦA KETTHUC.LUA
+-- LOGIC CHỨC NĂNG
 -- ==========================================
 
--- 1. CHAMS PETA & ENEMY (TỰ ĐỘNG CHẠY NGẦM RAINBOW)
+-- 1. CHAMS PETA & ENEMY (SỬA LỖI CÚ PHÁP TẠI ĐÂY)
 local function getRainbowColor()
     local t = tick()
     local r = math.abs(math.sin(t)) * 255
@@ -64,21 +64,23 @@ task.spawn(function()
     while true do
         chamsHighlights = {}
         for _, item in pairs(workspace:GetDescendants()) do
-            if item:IsA("Model") and (
-                string.find(string.lower(item.Name), "peta")
-                or string.lower(item.Name) == "enemymodel")
-                or string.lower(item.Name) == "enemymodels")
-                or string.lower(item.Name) == "enemymodel_stage6")
-                or string.lower(item.Name) == "enemymodel_stage7")
-                or string.lower(item.Name) == "enemymodel_stage8")
-                or string.lower(item.Name) == "enemymodel_stage9")
-                or string.lower(item.Name) == "enemymodel_stage10")
-                or string.lower(item.Name) == "stage")
-                or string.lower(item.Name) == "enemy")                                
-                then
-                addChamsRGB(item)
-                local highlight = item:FindFirstChild("PetaPetaChams")
-                if highlight then table.insert(chamsHighlights, highlight) end
+            if item:IsA("Model") then
+                local name = string.lower(item.Name)
+                if string.find(name, "peta")
+                    or name == "enemymodel"
+                    or name == "enemymodels"
+                    or name == "enemymodel_stage6"
+                    or name == "enemymodel_stage7"
+                    or name == "enemymodel_stage8"
+                    or name == "enemymodel_stage9"
+                    or name == "enemymodel_stage10"
+                    or name == "stage"
+                    or name == "enemy" then
+                    
+                    addChamsRGB(item)
+                    local highlight = item:FindFirstChild("PetaPetaChams")
+                    if highlight then table.insert(chamsHighlights, highlight) end
+                end
             end
         end
         task.wait(2)
