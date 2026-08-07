@@ -66,18 +66,16 @@ task.spawn(function()
         for _, item in pairs(workspace:GetDescendants()) do
             if item:IsA("Model") and (
                 string.find(string.lower(item.Name), "peta")
-                or string.lower(item.Name) == "enemymodel"
-                or string.lower(item.Name) == "enemymodels"
-                or string.lower(item.Name) == "enemymodel_stage6"
-                or string.lower(item.Name) == "enemymodel_stage7"
-                or string.lower(item.Name) == "enemymodel_stage8"
-                or string.lower(item.Name) == "enemymodel_stage9"
-                or string.lower(item.Name) == "enemymodel_stage10"
-                or string.lower(item.Name) == "stage"
-                or string.lower(item.Name) == "enemy"      
-              
-                
-            ) then
+                or string.lower(item.Name) == "enemymodel")
+                or string.lower(item.Name) == "enemymodels")
+                or string.lower(item.Name) == "enemymodel_stage6")
+                or string.lower(item.Name) == "enemymodel_stage7")
+                or string.lower(item.Name) == "enemymodel_stage8")
+                or string.lower(item.Name) == "enemymodel_stage9")
+                or string.lower(item.Name) == "enemymodel_stage10")
+                or string.lower(item.Name) == "stage")
+                or string.lower(item.Name) == "enemy")                                
+                then
                 addChamsRGB(item)
                 local highlight = item:FindFirstChild("PetaPetaChams")
                 if highlight then table.insert(chamsHighlights, highlight) end
@@ -185,7 +183,6 @@ local function updateItemESP()
             {MeshId = "rbxassetid://113824635091846", Name = "Candle Stand", Color = Color3.fromRGB(255, 165, 0)},
             {MeshId = "rbxassetid://87563522345335", Name = "Bowl", Color = Color3.fromRGB(220, 220, 255)},
             {MeshId = "rbxassetid://95226199656060", Name = "Dish", Color = Color3.fromRGB(192, 192, 192)},
-        }
         }
 
         for _, obj in ipairs(workspace:GetDescendants()) do
