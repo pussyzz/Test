@@ -1,0 +1,282 @@
+local workspace = game:GetService("Workspace")
+local players = game:GetService("Players")
+local replicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+
+local player = players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui", 5)
+local character = player.Character or player.CharacterAdded:Wait()
+local ballsFolder = workspace:WaitForChild("Balls")
+
+-- ==========================================
+-- LOGIC & CHỨC NĂNG TỪ SOURCE KETTHUC
+-- ==========================================
+local BASE_THRESHOLD = 0.2
+local VELOCITY_SCALING_FACTOR_FAST = 0.050
+local VELOCITY_SCALING_FACTOR_SLOW = 0.1
+local IMMEDIATE_PARRY_DISTANCE = 11
+local sliderValue = 25
+local isRunning = false
+local notifyparried = false
+local UseRage = false
+
+local parryButtonPress = replicatedStorage:WaitForChild("Remotes"):WaitForChild("ParryButtonPress")
+local abilityButtonPress = replicatedStorage:WaitForChild("Remotes"):WaitForChild("AbilityButtonPress")
+
+local focusedBall, distanceVisualizer = nil, nil
+local parryon = false
+local autoparrydistance = 11
+
+local function isPlayerOnMobile()
+    return UserInputService.TouchEnabled and not (UserInputService.KeyboardEnabled or UserInputService.GamepadEnabled)
+end
+
+local function onCharacterAdded(newCharacter)
+    character = newCharacter
+end
+player.CharacterAdded:Connect(onCharacterAdded)
+
+local function chooseNewFocusedBall()
+    local balls = ballsFolder:GetChildren()
+    for _, ball in ipairs(balls) do
+        if ball:GetAttribute("realBall") == true or ball:GetAttribute("target") ~= nil then
+            focusedBall = ball
+            break
+        end
+    end
+    return focusedBall
+end
+
+local function getDynamicThreshold(ballVelocityMagnitude)
+    if ballVelocityMagnitude > 60 then
+        return math.max(0.20, BASE_THRESHOLD - (ballVelocityMagnitude * VELOCITY_SCALING_FACTOR_FAST))
+    else
+        return math.min(0.01, BASE_THRESHOLD + (ballVelocityMagnitude * VELOCITY_SCALING_FACTOR_SLOW))
+    end
+end
+
+local function timeUntilImpact(ballVelocity, distanceToPlayer, playerVelocity)
+    if not character then return end
+    local directionToPlayer = (character.HumanoidRootPart.Position - focusedBall.Position).Unit
+    local velocityTowardsPlayer = ballVelocity:Dot(directionToPlayer) - playerVelocity:Dot(directionToPlayer)
+    if velocityTowardsPlayer <= 0 then return math.huge end
+    return (distanceToPlayer - sliderValue) / velocityTowardsPlayer
+end
+
+local function checkIfTarget()
+    for _, v in pairs(ballsFolder:GetChildren()) do
+        if v:IsA("Part") and v.BrickColor == BrickColor.new("Really red") then return true end 
+    end 
+    return false
+end
+
+local function checkBallDistance()
+    if not character or not checkIfTarget() then return end
+    local charPos = character.PrimaryPart.Position
+    local charVel = character.PrimaryPart.Velocity
+
+    if not focusedBall or not focusedBall.Parent then chooseNewFocusedBall() end
+    local ball = focusedBall
+    if not ball then return end
+
+    local distanceToPlayer = (ball.Position - charPos).Magnitude
+    local ballVelocityTowardsPlayer = ball.Velocity:Dot((charPos - ball.Position).Unit)
+    
+    if distanceToPlayer < 15 then
+        parryButtonPress:Fire()
+        task.wait()
+    end
+
+    if timeUntilImpact(ball.Velocity, distanceToPlayer, charVel) < getDynamicThreshold(ballVelocityTowardsPlayer) then
+        parryButtonPress:Fire()
+        task.wait(0.3)
+    end
+end
+
+local function autoParryCoroutine()
+    while isRunning do
+        checkBallDistance()
+        task.wait()
+    end
+end
+
+local function startAutoParry()
+    chooseNewFocusedBall()
+    isRunning = true
+    coroutine.resume(coroutine.create(autoParryCoroutine))
+end
+
+local function stopAutoParry()
+    isRunning = false
+end
+
+-- ==========================================
+-- GIAO DIỆN TỪ SOURCE XERO_HUB (TÙY CHỈNH)
+-- ==========================================
+local function createGUI()
+    local uniqueName = "HungHubPremiumGUI_" .. tostring(math.random(1000,9999)) .. "_" .. tostring(math.floor(tick()))
+    local gui = Instance.new("ScreenGui")
+    gui.Name = uniqueName
+    gui.ResetOnSpawn = false
+    gui.Parent = playerGui
+
+    -- Bubble Button 🐾
+    local bubbleBtn = Instance.new("TextButton", gui)
+    bubbleBtn.Size = UDim2.new(0, 40, 0, 40)
+    bubbleBtn.Position = UDim2.new(0, 10, 0.5, -20)
+    bubbleBtn.Text = "🐾"
+    bubbleBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    bubbleBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
+    bubbleBtn.BorderSizePixel = 0
+    bubbleBtn.ZIndex = 2
+    bubbleBtn.Active = true
+    bubbleBtn.Draggable = true
+
+    -- Main Frame
+    local frame = Instance.new("Frame", gui)
+    frame.Size = UDim2.new(0, 240, 0, 380)
+    frame.Position = UDim2.new(0, 60, 0.5, -190)
+    frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    frame.BorderSizePixel = 0
+    frame.Active = true
+    frame.Draggable = true
+    frame.Visible = true
+
+    bubbleBtn.MouseButton1Click:Connect(function()
+        frame.Visible = not frame.Visible
+    end)
+
+    local title = Instance.new("TextLabel", frame)
+    title.Size = UDim2.new(1, 0, 0, 30)
+    title.Position = UDim2.new(0, 0, 0, 0)
+    title.Text = "Hung Hub Premium 💫"
+    title.TextColor3 = Color3.new(1, 1, 1)
+    title.BackgroundTransparency = 1
+    title.Font = Enum.Font.SourceSansBold
+    title.TextScaled = true
+
+    -- Thanh cuộn để chứa nhiều chức năng
+    local scrollFrame = Instance.new("ScrollingFrame", frame)
+    scrollFrame.Size = UDim2.new(1, -10, 1, -40)
+    scrollFrame.Position = UDim2.new(0, 5, 0, 35)
+    scrollFrame.BackgroundTransparency = 1
+    scrollFrame.ScrollBarThickness = 4
+    scrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0) -- Tự động chỉnh sửa qua UIListLayout
+
+    local layout = Instance.new("UIListLayout", scrollFrame)
+    layout.SortOrder = Enum.SortOrder.LayoutOrder
+    layout.Padding = UDim.new(0, 5)
+
+    -- Hàm hỗ trợ tạo nút Toggle
+    local function createToggle(name, onColor, offColor, callback)
+        local btn = Instance.new("TextButton", scrollFrame)
+        btn.Size = UDim2.new(1, -10, 0, 35)
+        btn.BackgroundColor3 = offColor
+        btn.TextColor3 = Color3.new(1, 1, 1)
+        btn.Font = Enum.Font.SourceSansBold
+        btn.TextScaled = true
+        btn.Text = name .. ": OFF"
+        
+        local state = false
+        btn.MouseButton1Click:Connect(function()
+            state = not state
+            btn.Text = state and (name .. ": ON") or (name .. ": OFF")
+            btn.BackgroundColor3 = state and onColor or offColor
+            callback(state)
+        end)
+        scrollFrame.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 10)
+        return btn
+    end
+
+    -- Hàm hỗ trợ tạo nút bấm thường
+    local function createButton(name, bgColor, callback)
+        local btn = Instance.new("TextButton", scrollFrame)
+        btn.Size = UDim2.new(1, -10, 0, 35)
+        btn.BackgroundColor3 = bgColor
+        btn.TextColor3 = Color3.new(1, 1, 1)
+        btn.Font = Enum.Font.SourceSansBold
+        btn.TextScaled = true
+        btn.Text = name
+        
+        btn.MouseButton1Click:Connect(callback)
+        scrollFrame.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 10)
+        return btn
+    end
+
+    -- CÁC NÚT CHỨC NĂNG TỪ KETTHUC THÊM VÀO GIAO DIỆN MỚI
+    
+    createToggle("Auto Parry", Color3.fromRGB(0, 255, 127), Color3.fromRGB(180, 50, 50), function(val)
+        parryon = val
+        if val then startAutoParry() else stopAutoParry() end
+    end)
+
+    createToggle("Auto TP Parry", Color3.fromRGB(128, 0, 128), Color3.fromRGB(80, 80, 80), function(val)
+        getgenv().god = val
+        if val then
+            task.spawn(function()
+                while getgenv().god and task.wait() do
+                    for _,ball in next, workspace.Balls:GetChildren() do
+                        if ball and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                            player.Character.HumanoidRootPart.CFrame = CFrame.new(player.Character.HumanoidRootPart.Position, ball.Position)
+                            if player.Character:FindFirstChild("Highlight") then
+                                player.Character.HumanoidRootPart.CFrame = ball.CFrame * CFrame.new(0, 0, (ball.Velocity).Magnitude * -0.5)
+                                replicatedStorage.Remotes.ParryButtonPress:Fire()
+                            end
+                        end
+                    end
+                end
+            end)
+        end
+    end)
+
+    -- Hàm nạp Ability nhanh
+    local function equipAbility(abilityName)
+        local args = { [1] = abilityName }
+        replicatedStorage.Remotes.Store.RequestEquipAbility:InvokeServer(unpack(args))
+        replicatedStorage.Remotes.Store.GetOwnedAbilities:InvokeServer()
+        replicatedStorage.Remotes.kebaind:FireServer()
+    end
+
+    createButton("Equip: Dash", Color3.fromRGB(100, 149, 237), function() equipAbility("Dash") end)
+    createButton("Equip: Shadow Step", Color3.fromRGB(100, 149, 237), function() equipAbility("Shadow Step") end)
+    createButton("Equip: Super Jump", Color3.fromRGB(100, 149, 237), function() equipAbility("Super Jump") end)
+
+    createButton("Redeem All Codes", Color3.fromRGB(255, 165, 0), function()
+        local codes = {"WEEK4", "SORRY4DELAY"}
+        for _,v in pairs(codes) do
+            replicatedStorage.Remotes.SubmitCodeRequest:InvokeServer(v)
+        end
+    end)
+
+    createButton("Server Hop", Color3.fromRGB(80, 80, 80), function()
+        -- Rút gọn logic server hop
+        local PlaceID = game.PlaceId
+        local Site = game.HttpService:JSONDecode(game:HttpGet('https://games.roblox.com/v1/games/' .. PlaceID .. '/servers/Public?sortOrder=Asc&limit=100'))
+        for _,v in pairs(Site.data) do
+            if v.playing < v.maxPlayers then
+                game:GetService("TeleportService"):TeleportToPlaceInstance(PlaceID, v.id, player)
+                break
+            end
+        end
+    end)
+
+    -- Info Button (Đã cập nhật theo Hung Hub)
+    local infoBtn = createButton("Info", Color3.fromRGB(50, 50, 50), function()
+        local infoGui = Instance.new("TextLabel", gui)
+        infoGui.Size = UDim2.new(0.6, 0, 0.22, 0)
+        infoGui.Position = UDim2.new(0.2, 0, 0.4, 0)
+        infoGui.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+        infoGui.TextColor3 = Color3.new(1, 1, 1)
+        infoGui.TextScaled = true
+        infoGui.TextWrapped = true
+        infoGui.Text = "Hung Hub Premium kết hợp giao diện Renren Hub 💫\nTích hợp Auto Parry, TP Parry và Auto Equip Ability."
+        task.delay(5, function() infoGui:Destroy() end)
+    end)
+    
+    -- Cập nhật lại kích thước cuộn một lần cuối
+    task.wait(0.1)
+    scrollFrame.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 10)
+end
+
+pcall(createGUI)
