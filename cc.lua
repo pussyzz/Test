@@ -322,12 +322,6 @@ end
 -- ==============================================
 -- ========== GIAO DIỆN FLUENT MỚI ============
 -- ==============================================
--- Lưu lại danh sách GUI cũ để tìm ra GUI mới của Fluent
-local existingGuis = {}
-for _, gui in ipairs(CoreGui:GetChildren()) do
-    existingGuis[gui] = true
-end
-
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 
 local Window = Fluent:CreateWindow({
@@ -339,15 +333,6 @@ local Window = Fluent:CreateWindow({
     Theme = "Darker",
     MinimizeKey = Enum.KeyCode.LeftControl
 })
-
--- Tìm ScreenGui chứa menu của Fluent vừa được tạo
-local fluentGui = nil
-for _, gui in ipairs(CoreGui:GetChildren()) do
-    if not existingGuis[gui] and gui:IsA("ScreenGui") then
-        fluentGui = gui
-        break
-    end
-end
 
 -- Các Tabs
 local Tabs = {
@@ -389,21 +374,18 @@ ScreenGui.Parent = CoreGui
 
 local ToggleBtn = Instance.new("TextButton")
 ToggleBtn.Size = UDim2.new(0, 45, 0, 45)
-ToggleBtn.Position = UDim2.new(0, 10, 0.4, 0) -- Vị trí lề trái giữa màn hình
+ToggleBtn.Position = UDim2.new(0, 10, 0.4, 0)
 ToggleBtn.Text = ""
 ToggleBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 ToggleBtn.Parent = ScreenGui
 
--- Tạo góc bo tròn hoàn hảo (hình cầu)
 local UICorner = Instance.new("UICorner", ToggleBtn)
 UICorner.CornerRadius = UDim.new(1, 0)
 
--- Viền trắng đẹp mắt
 local UIStroke = Instance.new("UIStroke", ToggleBtn)
 UIStroke.Color = Color3.fromRGB(255, 255, 255)
 UIStroke.Thickness = 2
 
--- Tạo màu gradient giả lập khối cầu ma thuật xanh
 local UIGradient = Instance.new("UIGradient", ToggleBtn)
 UIGradient.Color = ColorSequence.new{
     ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 50, 255)),
@@ -411,7 +393,7 @@ UIGradient.Color = ColorSequence.new{
 }
 UIGradient.Rotation = 45
 
--- Kéo thả nút mượt mà
+-- Kéo thả mượt mà
 local dragging = false
 local dragInput, mousePos, framePos
 
@@ -442,9 +424,16 @@ game:GetService("UserInputService").InputChanged:Connect(function(input)
     end
 end)
 
--- Khi bấm vào quả cầu thì ẩn/hiện trực tiếp Menu, không dùng phím ảo nữa
+-- Quét tìm menu Fluent trực tiếp mỗi lần bấm (Khắc phục triệt để lỗi mất nút sau vài lần tắt mở)
 ToggleBtn.MouseButton1Click:Connect(function()
-    if fluentGui then
-        fluentGui.Enabled = not fluentGui.Enabled
+    for _, gui in ipairs(CoreGui:GetChildren()) do
+        -- Nhận diện giao diện của Fluent dựa trên cấu trúc các thành phần con bên trong
+        if gui:IsA("ScreenGui") and gui ~= ScreenGui then
+            local container = gui:FindFirstChild("Container") or gui:FindFirstChildWhichIsA("Frame", true)
+            if container and (container.Name == "Container" or container.Size.X.Offset > 300) then
+                gui.Enabled = not gui.Enabled
+                break
+            end
+        end
     end
 end)
