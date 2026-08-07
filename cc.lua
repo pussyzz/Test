@@ -304,16 +304,16 @@ end
 -- ========== 3. GIAO DIỆN CHUẨN XERO HUB =======
 -- ==============================================
 
-if CoreGui:FindFirstChild("XeroHubUI") then
-    CoreGui.XeroHubUI:Destroy()
+if CoreGui:FindFirstChild("XeroHubPureUI") then
+    CoreGui.XeroHubPureUI:Destroy()
 end
 
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "XeroHubUI"
+ScreenGui.Name = "XeroHubPureUI"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = CoreGui
 
--- Nút Cầu Mở/Tắt Menu Dành Cho Mobile (Không bao giờ bị lỗi)
+-- Nút Tròn Mở/Tắt Menu (Chuẩn Mobile)
 local ToggleButton = Instance.new("ImageButton")
 ToggleButton.Name = "ToggleButton"
 ToggleButton.Size = UDim2.new(0, 42, 0, 42)
@@ -329,7 +329,7 @@ local btnStroke = Instance.new("UIStroke", ToggleButton)
 btnStroke.Color = Color3.fromRGB(0, 170, 255)
 btnStroke.Thickness = 2
 
--- Kéo thả nút mở menu
+-- Kéo thả nút chạm di động
 local draggingBtn, dragInputBtn, mousePosBtn, framePosBtn
 ToggleButton.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -353,12 +353,12 @@ game:GetService("UserInputService").InputChanged:Connect(function(input)
     end
 end)
 
--- Main Frame (Khung Chính)
+-- Frame Bảng Menu Chính
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 490, 0, 310)
-MainFrame.Position = UDim2.new(0.5, -245, 0.5, -155)
-MainFrame.BackgroundColor3 = Color3.fromRGB(16, 17, 21)
+MainFrame.Size = UDim2.new(0, 480, 0, 300)
+MainFrame.Position = UDim2.new(0.5, -240, 0.5, -150)
+MainFrame.BackgroundColor3 = Color3.fromRGB(18, 20, 26)
 MainFrame.BorderSizePixel = 0
 MainFrame.ClipsDescendants = true
 MainFrame.Parent = ScreenGui
@@ -374,22 +374,22 @@ ToggleButton.MouseButton1Click:Connect(function()
     MainFrame.Visible = not MainFrame.Visible
 end)
 
--- TopBar (Thanh Tiêu Đề)
+-- TopBar (Cửa sổ 1:1 theo ảnh)
 local TopBar = Instance.new("Frame", MainFrame)
 TopBar.Size = UDim2.new(1, 0, 0, 36)
-TopBar.BackgroundColor3 = Color3.fromRGB(20, 22, 28)
+TopBar.BackgroundColor3 = Color3.fromRGB(22, 24, 31)
 TopBar.BorderSizePixel = 0
 
 local TitleText = Instance.new("TextLabel", TopBar)
 TitleText.Position = UDim2.new(0, 14, 0, 0)
 TitleText.Size = UDim2.new(0, 200, 1, 0)
-TitleText.Text = "Renren Hub | Blox Fruits"
-TitleText.TextColor3 = Color3.fromRGB(200, 205, 215)
+TitleText.Text = "Xero Hub | Blox Fruits"
+TitleText.TextColor3 = Color3.fromRGB(190, 195, 205)
 TitleText.Font = Enum.Font.GothamMedium
 TitleText.TextSize = 12
 TitleText.TextXAlignment = Enum.TextXAlignment.Left
 
--- Nút cửa sổ (Minimize, Maximize, Close chuẩn ảnh)
+-- Nút điều hướng cửa sổ chuẩn Xero Hub (— ☐ ✕)
 local WindowControls = Instance.new("Frame", TopBar)
 WindowControls.Position = UDim2.new(1, -90, 0, 0)
 WindowControls.Size = UDim2.new(0, 85, 1, 0)
@@ -412,7 +412,7 @@ createWinBtn("—", UDim2.new(0, 0, 0, 0), function() MainFrame.Visible = false 
 createWinBtn("☐", UDim2.new(0, 28, 0, 0), function() end)
 createWinBtn("✕", UDim2.new(0, 56, 0, 0), function() MainFrame.Visible = false end)
 
--- Kéo thả Main Frame trên điện thoại
+-- Kéo thả Main Frame
 local draggingMain, dragInputMain, mousePosMain, framePosMain
 TopBar.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -436,10 +436,10 @@ game:GetService("UserInputService").InputChanged:Connect(function(input)
     end
 end)
 
--- Sidebar (Thanh Menu Bên Trái)
+-- Sidebar Menu Bên Trái
 local Sidebar = Instance.new("ScrollingFrame", MainFrame)
-Sidebar.Position = UDim2.new(0, 10, 0, 44)
-Sidebar.Size = UDim2.new(0, 135, 1, -50)
+Sidebar.Position = UDim2.new(0, 8, 0, 42)
+Sidebar.Size = UDim2.new(0, 130, 1, -48)
 Sidebar.BackgroundTransparency = 1
 Sidebar.ScrollBarThickness = 0
 
@@ -447,10 +447,10 @@ local sideLayout = Instance.new("UIListLayout", Sidebar)
 sideLayout.SortOrder = Enum.SortOrder.LayoutOrder
 sideLayout.Padding = UDim.new(0, 4)
 
--- Content Area (Vùng Nội Dung Bên Phải)
+-- Content Area Bên Phải
 local ContentArea = Instance.new("Frame", MainFrame)
-ContentArea.Position = UDim2.new(0, 152, 0, 44)
-ContentArea.Size = UDim2.new(1, -162, 1, -50)
+ContentArea.Position = UDim2.new(0, 144, 0, 42)
+ContentArea.Size = UDim2.new(1, -152, 1, -48)
 ContentArea.BackgroundTransparency = 1
 
 local pages = {}
@@ -468,7 +468,6 @@ local function createTab(name, icon, isDefault)
     pageLayout.SortOrder = Enum.SortOrder.LayoutOrder
     pageLayout.Padding = UDim.new(0, 8)
 
-    -- Button Sidebar
     local btn = Instance.new("TextButton", Sidebar)
     btn.Size = UDim2.new(1, 0, 0, 32)
     btn.BackgroundColor3 = isDefault and Color3.fromRGB(28, 30, 38) or Color3.fromRGB(20, 22, 28)
@@ -481,7 +480,7 @@ local function createTab(name, icon, isDefault)
     local btnCorner = Instance.new("UICorner", btn)
     btnCorner.CornerRadius = UDim.new(0, 6)
 
-    -- Thanh Indicator màu xanh nhạt bên trái nút tab
+    -- Vạch Indicator màu xanh nước biển ở góc trái nút tab chọn (1:1 như ảnh)
     local activeIndicator = Instance.new("Frame", btn)
     activeIndicator.Position = UDim2.new(0, 0, 0.15, 0)
     activeIndicator.Size = UDim2.new(0, 3, 0.7, 0)
@@ -509,12 +508,12 @@ local function createTab(name, icon, isDefault)
     return page
 end
 
--- Tạo Các Tab Tương Tự Ảnh
+-- Tạo Tabs Chuẩn Theo Ảnh
 local tabMain = createTab("Auto Farm", "♿", true)
 local tabItem = createTab("Utilidades", "⚔", false)
 local tabInfo = createTab("Info Hub", "ℹ", false)
 
--- Tiêu Đề Mục Trong Tab
+-- Tiêu Đề Mục Lớn
 local function createHeader(parent, text)
     local header = Instance.new("TextLabel", parent)
     header.Size = UDim2.new(1, 0, 0, 28)
@@ -526,17 +525,17 @@ local function createHeader(parent, text)
     header.TextXAlignment = Enum.TextXAlignment.Left
 end
 
--- Thẻ Card Nút Gạt Switch 1:1 Như Trong Ảnh
+-- Thẻ Card Chức Năng 1:1 Như Trong Ảnh Xero Hub
 local function createToggleCard(parent, titleText, defaultState, callback)
     local card = Instance.new("Frame", parent)
     card.Size = UDim2.new(1, -6, 0, 42)
-    card.BackgroundColor3 = Color3.fromRGB(24, 26, 33)
+    card.BackgroundColor3 = Color3.fromRGB(26, 28, 36)
 
     local cardCorner = Instance.new("UICorner", card)
     cardCorner.CornerRadius = UDim.new(0, 7)
 
     local cardStroke = Instance.new("UIStroke", card)
-    cardStroke.Color = Color3.fromRGB(35, 38, 48)
+    cardStroke.Color = Color3.fromRGB(38, 41, 52)
     cardStroke.Thickness = 1
 
     local lbl = Instance.new("TextLabel", card)
@@ -548,7 +547,7 @@ local function createToggleCard(parent, titleText, defaultState, callback)
     lbl.TextSize = 11
     lbl.TextXAlignment = Enum.TextXAlignment.Left
 
-    -- Nút Switch
+    -- Nút Toggle Switch
     local switch = Instance.new("TextButton", card)
     switch.Position = UDim2.new(1, -48, 0.5, -10)
     switch.Size = UDim2.new(0, 36, 0, 20)
@@ -580,8 +579,8 @@ end
 -- ========== GẮN NỘI DUNG VÀO CÁC TAB ==========
 -- ==============================================
 
--- Tab 1: Auto Farm / Chức năng chính
-createHeader(tabMain, "Chức Năng Tối Ưu")
+-- Tab 1: Auto Farm
+createHeader(tabMain, "Auto Farm")
 
 createToggleCard(tabMain, "ESP Item (Nhìn Xuyên Tường)", espEnabled, function(val)
     setESPMode(val)
@@ -591,8 +590,8 @@ createToggleCard(tabMain, "Aura Auto Prompt (Tự Mở/Nhặt)", auraEnabled, fu
     setAuraMode(val)
 end)
 
--- Tab 2: Utilidades / Tốc độ & Noclip
-createHeader(tabItem, "Di Chuyển & Vật Lý")
+-- Tab 2: Utilidades
+createHeader(tabItem, "Tốc Độ & Đi Xuyên Tường")
 
 createToggleCard(tabItem, "Tăng Tốc Độ (Speed 32)", speedEnabled, function(val)
     setSpeedMode(val)
@@ -606,7 +605,7 @@ end)
 createHeader(tabInfo, "Thông Tin Script")
 local infoCard = Instance.new("Frame", tabInfo)
 infoCard.Size = UDim2.new(1, -6, 0, 120)
-infoCard.BackgroundColor3 = Color3.fromRGB(24, 26, 33)
+infoCard.BackgroundColor3 = Color3.fromRGB(26, 28, 36)
 local icCorner = Instance.new("UICorner", infoCard)
 icCorner.CornerRadius = UDim.new(0, 7)
 
@@ -621,5 +620,5 @@ infoLbl.TextXAlignment = Enum.TextXAlignment.Left
 infoLbl.TextYAlignment = Enum.TextYAlignment.Top
 infoLbl.TextWrapped = true
 infoLbl.Text = [[• ESP Chams Rainbow: Tự động kích hoạt.
-• Giao diện: Thiết kế chuẩn 1:1 Xero Hub dành riêng cho Mobile.
-• Ẩn/Hiện: Bấm nút biểu tượng Ninja nhỏ trên màn hình để bật/tắt menu mượt mà 100%.]]
+• Pure UI: Giao diện tự thiết kế 100% chuẩn Mobile.
+• Bật/Tắt mượt mà: Bấm biểu tượng Ninja trên màn hình để ẩn/hiện menu, hoàn toàn không bị đơ hay tự chuyển sang PC.]]
