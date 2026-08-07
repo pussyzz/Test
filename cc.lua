@@ -4,7 +4,7 @@ local RunService = game:GetService("RunService")
 local CoreGui = game:GetService("CoreGui") or playerGui
 
 -- ==========================================
--- ========== VÀI DÒNG FIX LAG NHẸ ==========
+-- ========== 1. FIX LAG LIGHTING ===========
 -- ==========================================
 pcall(function()
     settings().Rendering.QualityLevel = "Level01"
@@ -17,7 +17,7 @@ pcall(function()
 end)
 
 -- ==============================================
--- ========== CHỨC NĂNG GỐC (GIỮ NGUYÊN) ==========
+-- ========== 2. LOGIC CHỨC NĂNG GỐC ============
 -- ==============================================
 
 -- CHAMS PETA & ENEMY
@@ -75,7 +75,7 @@ task.spawn(function()
     end
 end)
 
--- ESP ITEM LAIN
+-- ESP ITEM
 local function addESPText(part, labelText)
     if not part or not part:IsA("BasePart") then return end
     if not part:FindFirstChild("ESPText") then
@@ -178,18 +178,13 @@ end
 
 local function setESPMode(on)
     espEnabled = on
-    if espLoop then
-        espLoop:Disconnect()
-        espLoop = nil
-    end
+    if espLoop then espLoop:Disconnect() espLoop = nil end
     if on then
         updateItemESP()
         espLoop = RunService.RenderStepped:Connect(function()
             staticLoop = staticLoop or 0
             staticLoop = staticLoop + 1
-            if staticLoop % 120 == 0 then
-                updateItemESP()
-            end
+            if staticLoop % 120 == 0 then updateItemESP() end
         end)
     else
         removeAllItemESP()
@@ -204,27 +199,20 @@ local normalSpeed = 16
 
 local function setSpeedMode(on)
     speedEnabled = on
-    if speedLoop then
-        speedLoop:Disconnect()
-        speedLoop = nil
-    end
+    if speedLoop then speedLoop:Disconnect() speedLoop = nil end
     if on then
         speedLoop = RunService.Heartbeat:Connect(function()
             local char = player.Character
             if char then
                 local hum = char:FindFirstChildWhichIsA("Humanoid")
-                if hum and hum.WalkSpeed ~= 32 then
-                    hum.WalkSpeed = 32
-                end
+                if hum and hum.WalkSpeed ~= 32 then hum.WalkSpeed = 32 end
             end
         end)
     else
         local char = player.Character
         if char then
             local hum = char:FindFirstChildWhichIsA("Humanoid")
-            if hum then
-                hum.WalkSpeed = normalSpeed
-            end
+            if hum then hum.WalkSpeed = normalSpeed end
         end
     end
 end
@@ -236,10 +224,7 @@ local safeY = nil
 
 local function setNoclipMode(on)
     noclipEnabled = on
-    if noclipLoop then
-        noclipLoop:Disconnect()
-        noclipLoop = nil
-    end
+    if noclipLoop then noclipLoop:Disconnect() noclipLoop = nil end
     if on then
         noclipLoop = RunService.Stepped:Connect(function()
             local char = player.Character
@@ -248,9 +233,7 @@ local function setNoclipMode(on)
                 local hrp = char:FindFirstChild("HumanoidRootPart")
                 if hum and hrp then
                     for _, v in ipairs(char:GetDescendants()) do
-                        if v:IsA("BasePart") then
-                            v.CanCollide = false
-                        end
+                        if v:IsA("BasePart") then v.CanCollide = false end
                     end
                     if hrp.Position.Y > 2 then
                         if (not safeY) or (hrp.Position.Y > safeY and hrp.Position.Y > 15) then
@@ -270,9 +253,7 @@ local function setNoclipMode(on)
         local char = player.Character
         if char then
             for _, v in ipairs(char:GetDescendants()) do
-                if v:IsA("BasePart") then
-                    v.CanCollide = true
-                end
+                if v:IsA("BasePart") then v.CanCollide = true end
             end
         end
     end
@@ -293,15 +274,18 @@ local function triggerNearbyPromptsOnce()
     for _, descendant in pairs(workspace:GetDescendants()) do
         if descendant:IsA("ProximityPrompt") and descendant.Enabled and descendant.Parent and promptFilter(descendant) then
             if descendant.Parent:IsA("BasePart") then
-                local distance = (character:WaitForChild("HumanoidRootPart").Position - descendant.Parent.Position).Magnitude
-                local uniqueId = descendant:GetDebugId()
-                if distance <= descendant.MaxActivationDistance and not triggeredPrompts[uniqueId] then
-                    pcall(function()
-                        fireproximityprompt(descendant)
-                        triggeredPrompts[uniqueId] = true
-                    end)
-                elseif distance > descendant.MaxActivationDistance and triggeredPrompts[uniqueId] then
-                    triggeredPrompts[uniqueId] = nil
+                local hrp = character:FindFirstChild("HumanoidRootPart")
+                if hrp then
+                    local distance = (hrp.Position - descendant.Parent.Position).Magnitude
+                    local uniqueId = descendant:GetDebugId()
+                    if distance <= descendant.MaxActivationDistance and not triggeredPrompts[uniqueId] then
+                        pcall(function()
+                            fireproximityprompt(descendant)
+                            triggeredPrompts[uniqueId] = true
+                        end)
+                    elseif distance > descendant.MaxActivationDistance and triggeredPrompts[uniqueId] then
+                        triggeredPrompts[uniqueId] = nil
+                    end
                 end
             end
         end
@@ -310,136 +294,332 @@ end
 
 local function setAuraMode(on)
     auraEnabled = on
-    if auraLoop then
-        auraLoop:Disconnect()
-        auraLoop = nil
-    end
+    if auraLoop then auraLoop:Disconnect() auraLoop = nil end
     if on then
-        auraLoop = RunService.Heartbeat:Connect(function()
-            triggerNearbyPromptsOnce()
-        end)
+        auraLoop = RunService.Heartbeat:Connect(function() triggerNearbyPromptsOnce() end)
     end
 end
 
 -- ==============================================
--- ========== GIAO DIỆN FLUENT MỚI ============
+-- ========== 3. GIAO DIỆN CHUẨN XERO HUB =======
 -- ==============================================
-local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 
-local Window = Fluent:CreateWindow({
-    Title = "Renren Hub",
-    SubTitle = "Bản Tối Ưu Hóa",
-    TabWidth = 160,
-    Size = UDim2.fromOffset(480, 300),
-    Acrylic = false, 
-    Theme = "Darker",
-    MinimizeKey = Enum.KeyCode.LeftControl
-})
-
--- Các Tabs
-local Tabs = {
-    Main = Window:AddTab({ Title = "Chức Năng Chính", Icon = "home" }),
-    Info = Window:AddTab({ Title = "Thông Tin", Icon = "info" })
-}
-
--- Gắn chức năng vào UI
-Tabs.Main:AddToggle("ToggleESP", {Title = "ESP Item (Nhìn xuyên tường)", Default = false }):OnChanged(function(Value)
-    setESPMode(Value)
-end)
-
-Tabs.Main:AddToggle("ToggleAura", {Title = "Aura (Tự động nhặt/mở)", Default = false }):OnChanged(function(Value)
-    setAuraMode(Value)
-end)
-
-Tabs.Main:AddToggle("ToggleSpeed", {Title = "Chạy Nhanh (Speed 32)", Default = false }):OnChanged(function(Value)
-    setSpeedMode(Value)
-end)
-
-Tabs.Main:AddToggle("ToggleNoclip", {Title = "Đi Xuyên Tường (Noclip)", Default = false }):OnChanged(function(Value)
-    setNoclipMode(Value)
-end)
-
-Tabs.Info:AddParagraph({
-    Title = "Thông tin Script",
-    Content = "ESP Chams Rainbow: Luôn bật\nESP Item: Bật/Tắt\nAura: Tự động Search/Pick Up/Open\nSpeed & Noclip: Đã được fix\nBy: Renren Hub 💫"
-})
-
-Window:SelectTab(1)
-
--- ==============================================
--- ======= NÚT BẤM (ORB CẦU XANH) ĐỂ BẬT/TẮT ====
--- ==============================================
--- Xóa nút cũ nếu tồn tại
-if CoreGui:FindFirstChild("MobileToggleMenu") then
-    CoreGui.MobileToggleMenu:Destroy()
+if CoreGui:FindFirstChild("XeroHubUI") then
+    CoreGui.XeroHubUI:Destroy()
 end
 
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "MobileToggleMenu"
+ScreenGui.Name = "XeroHubUI"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = CoreGui
 
-local ToggleBtn = Instance.new("TextButton")
-ToggleBtn.Size = UDim2.new(0, 45, 0, 45)
-ToggleBtn.Position = UDim2.new(0, 10, 0.4, 0)
-ToggleBtn.Text = ""
-ToggleBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-ToggleBtn.Parent = ScreenGui
+-- Nút Cầu Mở/Tắt Menu Dành Cho Mobile (Không bao giờ bị lỗi)
+local ToggleButton = Instance.new("ImageButton")
+ToggleButton.Name = "ToggleButton"
+ToggleButton.Size = UDim2.new(0, 42, 0, 42)
+ToggleButton.Position = UDim2.new(0, 15, 0.35, 0)
+ToggleButton.BackgroundColor3 = Color3.fromRGB(20, 22, 28)
+ToggleButton.Image = "rbxassetid://10723415903"
+ToggleButton.Parent = ScreenGui
 
-local UICorner = Instance.new("UICorner", ToggleBtn)
-UICorner.CornerRadius = UDim.new(1, 0)
+local btnCorner = Instance.new("UICorner", ToggleButton)
+btnCorner.CornerRadius = UDim.new(1, 0)
 
-local UIStroke = Instance.new("UIStroke", ToggleBtn)
-UIStroke.Color = Color3.fromRGB(255, 255, 255)
-UIStroke.Thickness = 2
+local btnStroke = Instance.new("UIStroke", ToggleButton)
+btnStroke.Color = Color3.fromRGB(0, 170, 255)
+btnStroke.Thickness = 2
 
-local UIGradient = Instance.new("UIGradient", ToggleBtn)
-UIGradient.Color = ColorSequence.new{
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 50, 255)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 200, 255))
-}
-UIGradient.Rotation = 45
-
--- Kéo thả nút mượt mà
-local dragging = false
-local dragInput, mousePos, framePos
-
-ToggleBtn.InputBegan:Connect(function(input)
+-- Kéo thả nút mở menu
+local draggingBtn, dragInputBtn, mousePosBtn, framePosBtn
+ToggleButton.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = true
-        mousePos = input.Position
-        framePos = ToggleBtn.Position
-
+        draggingBtn = true
+        mousePosBtn = input.Position
+        framePosBtn = ToggleButton.Position
         input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                dragging = false
-            end
+            if input.UserInputState == Enum.UserInputState.End then draggingBtn = false end
         end)
     end
 end)
-
-ToggleBtn.InputChanged:Connect(function(input)
+ToggleButton.InputChanged:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-        dragInput = input
+        dragInputBtn = input
     end
 end)
-
 game:GetService("UserInputService").InputChanged:Connect(function(input)
-    if input == dragInput and dragging then
-        local delta = input.Position - mousePos
-        ToggleBtn.Position = UDim2.new(framePos.X.Scale, framePos.X.Offset + delta.X, framePos.Y.Scale, framePos.Y.Offset + delta.Y)
+    if input == dragInputBtn and draggingBtn then
+        local delta = input.Position - mousePosBtn
+        ToggleButton.Position = UDim2.new(framePosBtn.X.Scale, framePosBtn.X.Offset + delta.X, framePosBtn.Y.Scale, framePosBtn.Y.Offset + delta.Y)
     end
 end)
 
--- FIX LỖI: Sử dụng phương thức chính chủ của Fluent để bật/tắt (hoạt động 100% không bị đơ)
-ToggleBtn.MouseButton1Click:Connect(function()
-    pcall(function()
-        if Fluent then
-            -- Giả lập bấm phím MinimizeKey (LeftControl) của Fluent
-            VirtualInputManager = game:GetService("VirtualInputManager")
-            VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.LeftControl, false, game)
-            task.wait(0.05)
-            VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.LeftControl, false, game)
-        end
-    end)
+-- Main Frame (Khung Chính)
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Size = UDim2.new(0, 490, 0, 310)
+MainFrame.Position = UDim2.new(0.5, -245, 0.5, -155)
+MainFrame.BackgroundColor3 = Color3.fromRGB(16, 17, 21)
+MainFrame.BorderSizePixel = 0
+MainFrame.ClipsDescendants = true
+MainFrame.Parent = ScreenGui
+
+local mainCorner = Instance.new("UICorner", MainFrame)
+mainCorner.CornerRadius = UDim.new(0, 10)
+
+local mainStroke = Instance.new("UIStroke", MainFrame)
+mainStroke.Color = Color3.fromRGB(35, 38, 48)
+mainStroke.Thickness = 1
+
+ToggleButton.MouseButton1Click:Connect(function()
+    MainFrame.Visible = not MainFrame.Visible
 end)
+
+-- TopBar (Thanh Tiêu Đề)
+local TopBar = Instance.new("Frame", MainFrame)
+TopBar.Size = UDim2.new(1, 0, 0, 36)
+TopBar.BackgroundColor3 = Color3.fromRGB(20, 22, 28)
+TopBar.BorderSizePixel = 0
+
+local TitleText = Instance.new("TextLabel", TopBar)
+TitleText.Position = UDim2.new(0, 14, 0, 0)
+TitleText.Size = UDim2.new(0, 200, 1, 0)
+TitleText.Text = "Renren Hub | Blox Fruits"
+TitleText.TextColor3 = Color3.fromRGB(200, 205, 215)
+TitleText.Font = Enum.Font.GothamMedium
+TitleText.TextSize = 12
+TitleText.TextXAlignment = Enum.TextXAlignment.Left
+
+-- Nút cửa sổ (Minimize, Maximize, Close chuẩn ảnh)
+local WindowControls = Instance.new("Frame", TopBar)
+WindowControls.Position = UDim2.new(1, -90, 0, 0)
+WindowControls.Size = UDim2.new(0, 85, 1, 0)
+WindowControls.BackgroundTransparency = 1
+
+local function createWinBtn(text, pos, callback)
+    local btn = Instance.new("TextButton", WindowControls)
+    btn.Position = pos
+    btn.Size = UDim2.new(0, 24, 1, 0)
+    btn.BackgroundTransparency = 1
+    btn.Text = text
+    btn.TextColor3 = Color3.fromRGB(160, 165, 175)
+    btn.Font = Enum.Font.Gotham
+    btn.TextSize = 13
+    btn.MouseButton1Click:Connect(callback)
+    return btn
+end
+
+createWinBtn("—", UDim2.new(0, 0, 0, 0), function() MainFrame.Visible = false end)
+createWinBtn("☐", UDim2.new(0, 28, 0, 0), function() end)
+createWinBtn("✕", UDim2.new(0, 56, 0, 0), function() MainFrame.Visible = false end)
+
+-- Kéo thả Main Frame trên điện thoại
+local draggingMain, dragInputMain, mousePosMain, framePosMain
+TopBar.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        draggingMain = true
+        mousePosMain = input.Position
+        framePosMain = MainFrame.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then draggingMain = false end
+        end)
+    end
+end)
+TopBar.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        dragInputMain = input
+    end
+end)
+game:GetService("UserInputService").InputChanged:Connect(function(input)
+    if input == dragInputMain and draggingMain then
+        local delta = input.Position - mousePosMain
+        MainFrame.Position = UDim2.new(framePosMain.X.Scale, framePosMain.X.Offset + delta.X, framePosMain.Y.Scale, framePosMain.Y.Offset + delta.Y)
+    end
+end)
+
+-- Sidebar (Thanh Menu Bên Trái)
+local Sidebar = Instance.new("ScrollingFrame", MainFrame)
+Sidebar.Position = UDim2.new(0, 10, 0, 44)
+Sidebar.Size = UDim2.new(0, 135, 1, -50)
+Sidebar.BackgroundTransparency = 1
+Sidebar.ScrollBarThickness = 0
+
+local sideLayout = Instance.new("UIListLayout", Sidebar)
+sideLayout.SortOrder = Enum.SortOrder.LayoutOrder
+sideLayout.Padding = UDim.new(0, 4)
+
+-- Content Area (Vùng Nội Dung Bên Phải)
+local ContentArea = Instance.new("Frame", MainFrame)
+ContentArea.Position = UDim2.new(0, 152, 0, 44)
+ContentArea.Size = UDim2.new(1, -162, 1, -50)
+ContentArea.BackgroundTransparency = 1
+
+local pages = {}
+local sideBtns = {}
+
+local function createTab(name, icon, isDefault)
+    local page = Instance.new("ScrollingFrame", ContentArea)
+    page.Size = UDim2.new(1, 0, 1, 0)
+    page.BackgroundTransparency = 1
+    page.ScrollBarThickness = 2
+    page.ScrollBarImageColor3 = Color3.fromRGB(50, 55, 65)
+    page.Visible = isDefault or false
+
+    local pageLayout = Instance.new("UIListLayout", page)
+    pageLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    pageLayout.Padding = UDim.new(0, 8)
+
+    -- Button Sidebar
+    local btn = Instance.new("TextButton", Sidebar)
+    btn.Size = UDim2.new(1, 0, 0, 32)
+    btn.BackgroundColor3 = isDefault and Color3.fromRGB(28, 30, 38) or Color3.fromRGB(20, 22, 28)
+    btn.Text = "  " .. icon .. "  " .. name
+    btn.TextColor3 = isDefault and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(140, 145, 155)
+    btn.Font = Enum.Font.GothamMedium
+    btn.TextSize = 11
+    btn.TextXAlignment = Enum.TextXAlignment.Left
+
+    local btnCorner = Instance.new("UICorner", btn)
+    btnCorner.CornerRadius = UDim.new(0, 6)
+
+    -- Thanh Indicator màu xanh nhạt bên trái nút tab
+    local activeIndicator = Instance.new("Frame", btn)
+    activeIndicator.Position = UDim2.new(0, 0, 0.15, 0)
+    activeIndicator.Size = UDim2.new(0, 3, 0.7, 0)
+    activeIndicator.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+    activeIndicator.Visible = isDefault or false
+
+    local indCorner = Instance.new("UICorner", activeIndicator)
+    indCorner.CornerRadius = UDim.new(1, 0)
+
+    btn.MouseButton1Click:Connect(function()
+        for _, p in pairs(pages) do p.Visible = false end
+        for _, b in pairs(sideBtns) do
+            b.Btn.BackgroundColor3 = Color3.fromRGB(20, 22, 28)
+            b.Btn.TextColor3 = Color3.fromRGB(140, 145, 155)
+            b.Ind.Visible = false
+        end
+        page.Visible = true
+        btn.BackgroundColor3 = Color3.fromRGB(28, 30, 38)
+        btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        activeIndicator.Visible = true
+    end)
+
+    table.insert(pages, page)
+    table.insert(sideBtns, {Btn = btn, Ind = activeIndicator})
+    return page
+end
+
+-- Tạo Các Tab Tương Tự Ảnh
+local tabMain = createTab("Auto Farm", "♿", true)
+local tabItem = createTab("Utilidades", "⚔", false)
+local tabInfo = createTab("Info Hub", "ℹ", false)
+
+-- Tiêu Đề Mục Trong Tab
+local function createHeader(parent, text)
+    local header = Instance.new("TextLabel", parent)
+    header.Size = UDim2.new(1, 0, 0, 28)
+    header.BackgroundTransparency = 1
+    header.Text = text
+    header.TextColor3 = Color3.fromRGB(240, 245, 255)
+    header.Font = Enum.Font.GothamBold
+    header.TextSize = 18
+    header.TextXAlignment = Enum.TextXAlignment.Left
+end
+
+-- Thẻ Card Nút Gạt Switch 1:1 Như Trong Ảnh
+local function createToggleCard(parent, titleText, defaultState, callback)
+    local card = Instance.new("Frame", parent)
+    card.Size = UDim2.new(1, -6, 0, 42)
+    card.BackgroundColor3 = Color3.fromRGB(24, 26, 33)
+
+    local cardCorner = Instance.new("UICorner", card)
+    cardCorner.CornerRadius = UDim.new(0, 7)
+
+    local cardStroke = Instance.new("UIStroke", card)
+    cardStroke.Color = Color3.fromRGB(35, 38, 48)
+    cardStroke.Thickness = 1
+
+    local lbl = Instance.new("TextLabel", card)
+    lbl.Position = UDim2.new(0, 12, 0, 0)
+    lbl.Size = UDim2.new(0.7, 0, 1, 0)
+    lbl.Text = titleText
+    lbl.TextColor3 = Color3.fromRGB(200, 205, 215)
+    lbl.Font = Enum.Font.GothamMedium
+    lbl.TextSize = 11
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+
+    -- Nút Switch
+    local switch = Instance.new("TextButton", card)
+    switch.Position = UDim2.new(1, -48, 0.5, -10)
+    switch.Size = UDim2.new(0, 36, 0, 20)
+    switch.AutoButtonColor = false
+    switch.Text = ""
+    switch.BackgroundColor3 = defaultState and Color3.fromRGB(0, 170, 255) or Color3.fromRGB(42, 45, 56)
+
+    local swCorner = Instance.new("UICorner", switch)
+    swCorner.CornerRadius = UDim.new(1, 0)
+
+    local knob = Instance.new("Frame", switch)
+    knob.Size = UDim2.new(0, 14, 0, 14)
+    knob.Position = defaultState and UDim2.new(1, -17, 0.5, -7) or UDim2.new(0, 3, 0.5, -7)
+    knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+
+    local knobCorner = Instance.new("UICorner", knob)
+    knobCorner.CornerRadius = UDim.new(1, 0)
+
+    local state = defaultState
+    switch.MouseButton1Click:Connect(function()
+        state = not state
+        switch.BackgroundColor3 = state and Color3.fromRGB(0, 170, 255) or Color3.fromRGB(42, 45, 56)
+        knob.Position = state and UDim2.new(1, -17, 0.5, -7) or UDim2.new(0, 3, 0.5, -7)
+        callback(state)
+    end)
+end
+
+-- ==============================================
+-- ========== GẮN NỘI DUNG VÀO CÁC TAB ==========
+-- ==============================================
+
+-- Tab 1: Auto Farm / Chức năng chính
+createHeader(tabMain, "Chức Năng Tối Ưu")
+
+createToggleCard(tabMain, "ESP Item (Nhìn Xuyên Tường)", espEnabled, function(val)
+    setESPMode(val)
+end)
+
+createToggleCard(tabMain, "Aura Auto Prompt (Tự Mở/Nhặt)", auraEnabled, function(val)
+    setAuraMode(val)
+end)
+
+-- Tab 2: Utilidades / Tốc độ & Noclip
+createHeader(tabItem, "Di Chuyển & Vật Lý")
+
+createToggleCard(tabItem, "Tăng Tốc Độ (Speed 32)", speedEnabled, function(val)
+    setSpeedMode(val)
+end)
+
+createToggleCard(tabItem, "Đi Xuyên Tường (Noclip Anti-Fall)", noclipEnabled, function(val)
+    setNoclipMode(val)
+end)
+
+-- Tab 3: Info Hub
+createHeader(tabInfo, "Thông Tin Script")
+local infoCard = Instance.new("Frame", tabInfo)
+infoCard.Size = UDim2.new(1, -6, 0, 120)
+infoCard.BackgroundColor3 = Color3.fromRGB(24, 26, 33)
+local icCorner = Instance.new("UICorner", infoCard)
+icCorner.CornerRadius = UDim.new(0, 7)
+
+local infoLbl = Instance.new("TextLabel", infoCard)
+infoLbl.Position = UDim2.new(0, 12, 0, 10)
+infoLbl.Size = UDim2.new(1, -24, 1, -20)
+infoLbl.BackgroundTransparency = 1
+infoLbl.TextColor3 = Color3.fromRGB(170, 175, 185)
+infoLbl.Font = Enum.Font.Gotham
+infoLbl.TextSize = 11
+infoLbl.TextXAlignment = Enum.TextXAlignment.Left
+infoLbl.TextYAlignment = Enum.TextYAlignment.Top
+infoLbl.TextWrapped = true
+infoLbl.Text = [[• ESP Chams Rainbow: Tự động kích hoạt.
+• Giao diện: Thiết kế chuẩn 1:1 Xero Hub dành riêng cho Mobile.
+• Ẩn/Hiện: Bấm nút biểu tượng Ninja nhỏ trên màn hình để bật/tắt menu mượt mà 100%.]]
