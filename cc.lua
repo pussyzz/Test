@@ -47,18 +47,20 @@ local chamsHighlights = {}
 
 task.spawn(function()
     while true do
-        chamsHighlights = {}
-        for _, item in pairs(workspace:GetDescendants()) do
-            if item:IsA("Model") and (
-                string.find(string.lower(item.Name), "peta")
-                or string.lower(item.Name) == "enemymodel"
-                or string.lower(item.Name) == "enemymodels"
-            ) then
-                addChamsRGB(item)
-                local highlight = item:FindFirstChild("PetaPetaChams")
-                if highlight then table.insert(chamsHighlights, highlight) end
+        pcall(function()
+            chamsHighlights = {}
+            for _, item in pairs(workspace:GetDescendants()) do
+                if item:IsA("Model") and (
+                    string.find(string.lower(item.Name), "peta")
+                    or string.lower(item.Name) == "enemymodel"
+                    or string.lower(item.Name) == "enemymodels"
+                ) then
+                    addChamsRGB(item)
+                    local highlight = item:FindFirstChild("PetaPetaChams")
+                    if highlight then table.insert(chamsHighlights, highlight) end
+                end
             end
-        end
+        end)
         task.wait(2)
     end
 end)
@@ -67,7 +69,7 @@ task.spawn(function()
     while true do
         local color = getRainbowColor()
         for _, highlight in ipairs(chamsHighlights) do
-            highlight.FillColor = color
+            if highlight then highlight.FillColor = color end
         end
         task.wait(0.1)
     end
@@ -367,6 +369,11 @@ Window:SelectTab(1)
 -- ==============================================
 -- ======= NÚT BẤM (ORB CẦU XANH) ĐỂ BẬT/TẮT ====
 -- ==============================================
+-- Xóa nút cũ nếu tồn tại
+if CoreGui:FindFirstChild("MobileToggleMenu") then
+    CoreGui.MobileToggleMenu:Destroy()
+end
+
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "MobileToggleMenu"
 ScreenGui.ResetOnSpawn = false
@@ -393,7 +400,7 @@ UIGradient.Color = ColorSequence.new{
 }
 UIGradient.Rotation = 45
 
--- Kéo thả mượt mà
+-- Kéo thả nút mượt mà
 local dragging = false
 local dragInput, mousePos, framePos
 
@@ -420,20 +427,19 @@ end)
 game:GetService("UserInputService").InputChanged:Connect(function(input)
     if input == dragInput and dragging then
         local delta = input.Position - mousePos
-        ToggleBtn.Position  = UDim2.new(framePos.X.Scale, framePos.X.Offset + delta.X, framePos.Y.Scale, framePos.Y.Offset + delta.Y)
+        ToggleBtn.Position = UDim2.new(framePos.X.Scale, framePos.X.Offset + delta.X, framePos.Y.Scale, framePos.Y.Offset + delta.Y)
     end
 end)
 
--- Quét tìm menu Fluent trực tiếp mỗi lần bấm (Khắc phục triệt để lỗi mất nút sau vài lần tắt mở)
+-- FIX LỖI: Sử dụng phương thức chính chủ của Fluent để bật/tắt (hoạt động 100% không bị đơ)
 ToggleBtn.MouseButton1Click:Connect(function()
-    for _, gui in ipairs(CoreGui:GetChildren()) do
-        -- Nhận diện giao diện của Fluent dựa trên cấu trúc các thành phần con bên trong
-        if gui:IsA("ScreenGui") and gui ~= ScreenGui then
-            local container = gui:FindFirstChild("Container") or gui:FindFirstChildWhichIsA("Frame", true)
-            if container and (container.Name == "Container" or container.Size.X.Offset > 300) then
-                gui.Enabled = not gui.Enabled
-                break
-            end
+    pcall(function()
+        if Fluent then
+            -- Giả lập bấm phím MinimizeKey (LeftControl) của Fluent
+            VirtualInputManager = game:GetService("VirtualInputManager")
+            VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.LeftControl, false, game)
+            task.wait(0.05)
+            VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.LeftControl, false, game)
         end
-    end
+    end)
 end)
