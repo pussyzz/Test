@@ -322,6 +322,12 @@ end
 -- ==============================================
 -- ========== GIAO DIỆN FLUENT MỚI ============
 -- ==============================================
+-- Lưu lại danh sách GUI cũ để tìm ra GUI mới của Fluent
+local existingGuis = {}
+for _, gui in ipairs(CoreGui:GetChildren()) do
+    existingGuis[gui] = true
+end
+
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 
 local Window = Fluent:CreateWindow({
@@ -333,6 +339,15 @@ local Window = Fluent:CreateWindow({
     Theme = "Darker",
     MinimizeKey = Enum.KeyCode.LeftControl
 })
+
+-- Tìm ScreenGui chứa menu của Fluent vừa được tạo
+local fluentGui = nil
+for _, gui in ipairs(CoreGui:GetChildren()) do
+    if not existingGuis[gui] and gui:IsA("ScreenGui") then
+        fluentGui = gui
+        break
+    end
+end
 
 -- Các Tabs
 local Tabs = {
@@ -427,10 +442,9 @@ game:GetService("UserInputService").InputChanged:Connect(function(input)
     end
 end)
 
--- Chức năng bật/thu nhỏ Menu khi click vào quả cầu
-local vim = game:GetService("VirtualInputManager")
+-- Khi bấm vào quả cầu thì ẩn/hiện trực tiếp Menu, không dùng phím ảo nữa
 ToggleBtn.MouseButton1Click:Connect(function()
-    -- Gửi phím ảo Ctrl Trái để kích hoạt lệnh Thu Nhỏ/Phóng To của Fluent UI
-    vim:SendKeyEvent(true, Enum.KeyCode.LeftControl, false, game)
-    vim:SendKeyEvent(false, Enum.KeyCode.LeftControl, false, game)
+    if fluentGui then
+        fluentGui.Enabled = not fluentGui.Enabled
+    end
 end)
